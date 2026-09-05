@@ -219,3 +219,6 @@ __marimo__/
 
 # Claude Code local settings (machine-specific, not shared)
 .claude/settings.local.json
+
+# Локальная документация проекта — не публикуется в репозитории
+/docs/
