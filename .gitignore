@@ -217,8 +217,12 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 
-# Claude Code local settings (machine-specific, not shared)
-.claude/settings.local.json
+# AI-инструменты — соло-разработка, интеграции не нужны в публичном репозитории
+/.claude/
+/.cursor/
+/.gemini/
+/.opencode/
+/.github/
 
 # Локальная документация проекта — не публикуется в репозитории
 /docs/
