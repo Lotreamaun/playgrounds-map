@@ -229,3 +229,6 @@ __marimo__/
 
 # SQLite-файл БД (runtime-данные, не коммитятся)
 backend/data/*.db
+
+# Загруженные фото площадок (runtime-данные, не коммитятся)
+backend/data/photos/

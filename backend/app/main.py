@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import get_settings
 from app.core.database import create_db_and_tables
 from app.models.court import Court  # noqa: F401 — регистрирует модель в SQLModel.metadata
+from app.routers import courts
 
 settings = get_settings()
 
@@ -33,6 +34,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(courts.router)
 
 
 @app.get("/health")
