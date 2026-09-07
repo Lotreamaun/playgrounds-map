@@ -1,3 +1,5 @@
+@import '@yandex/ymaps3-default-ui-theme/dist/esm/index.css';
+
 :root {
   --text: #6b6375;
   --text-h: #08060d;
@@ -51,11 +53,8 @@
 }
 
 #root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
+  width: 100%;
+  border-inline: none;
   min-height: 100svh;
   display: flex;
   flex-direction: column;
@@ -64,6 +63,171 @@
 
 body {
   margin: 0;
+}
+
+.map-view {
+  width: 100%;
+  height: 100svh;
+}
+
+.map-view--message {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  text-align: center;
+  color: var(--text-h);
+}
+
+.court-marker {
+  position: relative;
+}
+
+.court-marker__pin {
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  cursor: pointer;
+  background: var(--accent);
+  box-shadow: var(--shadow);
+  transform: translate(-50%, -50%);
+}
+
+.court-marker__popup {
+  position: absolute;
+  bottom: calc(100% + 4px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  width: 220px;
+  padding: 12px;
+  border-radius: 8px;
+  background: var(--bg);
+  box-shadow: var(--shadow);
+  font-size: 13px;
+}
+
+.court-cluster {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  background: var(--accent);
+  box-shadow: var(--shadow);
+  transform: translate(-50%, -50%);
+}
+
+.court-card__photo {
+  width: 100%;
+  max-width: 240px;
+  margin-top: 8px;
+  border-radius: 6px;
+}
+
+.court-card p {
+  margin: 2px 0;
+}
+
+.court-card h3 {
+  margin: 0 0 4px;
+}
+
+.court-form {
+  position: absolute;
+  z-index: 1000;
+  top: 12px;
+  right: 12px;
+  width: 280px;
+  padding: 16px;
+  border-radius: 8px;
+  background: var(--bg);
+  box-shadow: var(--shadow);
+  font-size: 14px;
+}
+
+.court-form h2 {
+  margin: 0 0 12px;
+  font-size: 18px;
+}
+
+.court-form div {
+  margin-bottom: 10px;
+}
+
+.court-form label {
+  display: block;
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+
+.court-form input,
+.court-form select {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font: inherit;
+  color: var(--text-h);
+  background: var(--bg);
+}
+
+.court-form__actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.court-form__actions button {
+  flex: 1;
+  padding: 8px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font: inherit;
+  color: #fff;
+  background: var(--accent);
+}
+
+.court-form__actions button[type='button'] {
+  background: var(--border);
+  color: var(--text);
+}
+
+.court-form__actions button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.court-form__message {
+  padding: 8px;
+  border-radius: 4px;
+  color: var(--text-h);
+  background: var(--accent-bg);
+  border: 1px solid var(--accent-border);
+}
+
+.add-court-button {
+  position: absolute;
+  z-index: 1000;
+  left: 12px;
+  bottom: 12px;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 14px;
+  color: #fff;
+  background: var(--accent);
+  box-shadow: var(--shadow);
 }
 
 h1,
