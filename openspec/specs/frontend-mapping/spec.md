@@ -19,6 +19,17 @@ The frontend SHALL provide a typed API client covering `GET /courts`, `POST /cou
 - **WHEN** the API client is created
 - **THEN** it uses the value of `VITE_API_BASE_URL` as the base URL for all requests
 
+### Requirement: API client can fetch all courts without a bounding box
+Типизированный API-клиент SHALL поддерживать запрос `GET /courts` без bounding box, возвращающий все площадки. Это необходимо для заполнения списка, не ограниченного текущим вьюпортом карты.
+
+#### Scenario: Fetching all courts
+- **WHEN** клиент запрашивает `GET /courts` без параметров bounding box
+- **THEN** ответ содержит все доступные площадки независимо от вьюпорта карты
+
+#### Scenario: Existing bbox fetch still supported
+- **WHEN** клиент запрашивает `GET /courts` с параметрами bounding box
+- **THEN** поведение не меняется: возвращаются только площадки внутри границ
+
 ### Requirement: Types generated from backend OpenAPI schema
 The frontend SHALL derive its court TypeScript types from the backend's OpenAPI schema via a code generator (`openapi-typescript`), rather than hand-writing or manually mirroring them. Generated types SHALL NOT be edited by hand.
 
@@ -69,3 +80,14 @@ The frontend SHALL provide a map control that, when activated, centers the map o
 #### Scenario: Locate fallback to default center
 - **WHEN** the user activates the locate control but geolocation is denied or unavailable
 - **THEN** the map centers on the default city coordinates without error
+
+### Requirement: Map remains a full-screen canvas behind sheets on mobile
+На мобильном карта SHALL оставаться полноэкранной постоянной подложкой. Вторичный UI (компактный верхний бар, кнопка добавления FAB, шторки, модалка формы) SHALL накладываться поверх карты, не заменяя её отдельной страницей.
+
+#### Scenario: Map persists behind the top bar and FAB
+- **WHEN** пользователь работает на мобильном
+- **THEN** поверх карты отображаются компактный верхний бар и кнопка добавления (FAB), а карта остаётся полноэкранной под ними
+
+#### Scenario: Map stays interactive when a sheet is closed
+- **WHEN** пользователь закрывает шторку или модалку
+- **THEN** карта вновь на весь экран и принимает касания без перезагрузки

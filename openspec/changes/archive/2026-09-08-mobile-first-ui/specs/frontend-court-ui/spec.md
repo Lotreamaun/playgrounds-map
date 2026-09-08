@@ -1,8 +1,4 @@
-## Purpose
-
-Completes the MVP frontend with the interactive court UI: clicking a court marker shows its detail card, and a form lets users add new courts by picking coordinates on the map.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Court details shown on marker click
 На мобильном при клике на маркер карточка площадки SHALL показываться в нижней шторке, поднимающейся поверх карты, а не в небольшом всплывающем пузыре. Карточка SHALL показывать адрес, покрытие, состояние и фото при наличии.
