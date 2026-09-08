@@ -4,6 +4,8 @@ import type { ComponentType } from 'react'
 
 const SCRIPT_ID = 'yandex-maps-js-api'
 
+const GEOCODER_URL = 'https://geocode-maps.yandex.ru/v1'
+
 function loadScript(apiKey: string): Promise<void> {
   if (document.getElementById(SCRIPT_ID) != null) {
     return Promise.resolve()
@@ -75,4 +77,27 @@ export function loadYandexMaps(apiKey: string): Promise<YandexMapsModules> {
     })
 
   return bootstrapPromise
+}
+
+export async function reverseGeocode(
+  latitude: number,
+  longitude: number,
+  apiKey: string,
+): Promise<string | null> {
+  const params = new URLSearchParams({
+    apikey: apiKey,
+    geocode: `${longitude},${latitude}`,
+    format: 'json',
+    lang: 'ru_RU',
+    results: '1',
+  })
+  const res = await fetch(`${GEOCODER_URL}?${params.toString()}`)
+  if (!res.ok) {
+    throw new Error(`Geocoder request failed: ${res.status} ${res.statusText}`)
+  }
+  const data = await res.json()
+  const featureMember =
+    data?.response?.GeoObjectCollection?.featureMember
+  const address = featureMember?.[0]?.GeoObject?.metaDataProperty?.GeocoderMetaData?.text
+  return typeof address === 'string' && address !== '' ? address : null
 }

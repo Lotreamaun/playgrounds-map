@@ -79,6 +79,8 @@ export interface components {
             has_lighting: boolean;
             /** Description */
             description?: string | null;
+            /** Address */
+            address?: string | null;
             /** Photo */
             photo?: string | null;
         };
@@ -100,6 +102,8 @@ export interface components {
             has_lighting: boolean;
             /** Description */
             description?: string | null;
+            /** Address */
+            address?: string | null;
             /** Photo Url */
             photo_url?: string | null;
             /** Attributes */

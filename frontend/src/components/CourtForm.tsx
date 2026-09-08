@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { ChangeEvent, FormEvent } from 'react'
 import { createCourt } from '../services/api'
 import type { Court } from '../services/api'
+import { reverseGeocode } from '../services/yandexMaps'
 
 export interface Coordinates {
   latitude: number
@@ -16,13 +17,52 @@ interface CourtFormProps {
 
 const SURFACES = ['asphalt', 'rubber', 'grass', 'sand', 'wood', 'other']
 const CONDITIONS = ['excellent', 'good', 'fair', 'poor']
+const API_KEY = import.meta.env.VITE_YANDEX_GEOCODER_KEY as string | undefined
+
+const addressCache = new Map<string, string | null>()
+
+function cacheKey(latitude: number, longitude: number): string {
+  return `${latitude.toFixed(6)},${longitude.toFixed(6)}`
+}
 
 function CourtForm({ coordinates, onCreated, onCancel }: CourtFormProps) {
   const [surface, setSurface] = useState('')
   const [condition, setCondition] = useState('')
+  const [address, setAddress] = useState('')
   const [photo, setPhoto] = useState<File | null>(null)
   const [message, setMessage] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+
+  useEffect(() => {
+    if (coordinates == null) {
+      setAddress('')
+      return
+    }
+    const key = cacheKey(coordinates.latitude, coordinates.longitude)
+    if (addressCache.has(key)) {
+      setAddress(addressCache.get(key) ?? '')
+      return
+    }
+    if (API_KEY == null || API_KEY === '') {
+      addressCache.set(key, null)
+      return
+    }
+    let cancelled = false
+    reverseGeocode(coordinates.latitude, coordinates.longitude, API_KEY)
+      .then((value) => {
+        if (cancelled) return
+        addressCache.set(key, value)
+        setAddress(value ?? '')
+      })
+      .catch((err) => {
+        if (cancelled) return
+        console.error('Failed to geocode coordinates:', err)
+        addressCache.set(key, null)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [coordinates])
 
   const handlePhotoChange = (event: ChangeEvent<HTMLInputElement>) => {
     setPhoto(event.target.files?.[0] ?? null)
@@ -33,11 +73,11 @@ function CourtForm({ coordinates, onCreated, onCancel }: CourtFormProps) {
     setMessage(null)
 
     if (coordinates == null) {
-      setMessage('Pick a location on the map first.')
+      setMessage('Сначала выберите точку на карте.')
       return
     }
     if (!surface || !condition) {
-      setMessage('Surface and condition are required.')
+      setMessage('Покрытие и состояние обязательны.')
       return
     }
 
@@ -50,6 +90,7 @@ function CourtForm({ coordinates, onCreated, onCancel }: CourtFormProps) {
         surface,
         condition,
         has_lighting: false,
+        address: address != null && address !== '' ? address : undefined,
         photo: photo ?? undefined,
       })
       onCreated(court)
@@ -57,10 +98,10 @@ function CourtForm({ coordinates, onCreated, onCancel }: CourtFormProps) {
       const status = (err as { status?: number }).status
       if (status === 409) {
         setMessage(
-          'A basketball court already exists near this spot. Choose a different point.',
+          'Рядом с этой точкой уже есть баскетбольная площадка. Выберите другую точку.',
         )
       } else {
-        setMessage(err instanceof Error ? err.message : 'Failed to add the court. Please try again.')
+        setMessage(err instanceof Error ? err.message : 'Не удалось добавить площадку. Попробуйте ещё раз.')
       }
     } finally {
       setSubmitting(false)
@@ -69,13 +110,13 @@ function CourtForm({ coordinates, onCreated, onCancel }: CourtFormProps) {
 
   return (
     <form className="court-form" onSubmit={handleSubmit}>
-      <h2>Add a court</h2>
+      <h2>Добавить площадку</h2>
 
       <div className="court-form__coords">
-        <label>Coordinates</label>
+        <label>Координаты</label>
         <div>
           {coordinates == null ? (
-            <span>Click the map to pick a location</span>
+            <span>Нажмите на карту, чтобы выбрать точку</span>
           ) : (
             <span>
               {coordinates.latitude.toFixed(6)}, {coordinates.longitude.toFixed(6)}
@@ -85,7 +126,18 @@ function CourtForm({ coordinates, onCreated, onCancel }: CourtFormProps) {
       </div>
 
       <div>
-        <label htmlFor="surface">Surface</label>
+        <label htmlFor="address">Адрес</label>
+        <input
+          id="address"
+          type="text"
+          value={address}
+          onChange={(e) => setAddress(e.target.value)}
+          placeholder="Адрес автоматически, можно изменить"
+        />
+      </div>
+
+      <div>
+        <label htmlFor="surface">Покрытие</label>
         <select
           id="surface"
           value={surface}
@@ -93,7 +145,7 @@ function CourtForm({ coordinates, onCreated, onCancel }: CourtFormProps) {
           required
         >
           <option value="" disabled>
-            Select surface
+            Выберите покрытие
           </option>
           {SURFACES.map((value) => (
             <option key={value} value={value}>
@@ -104,7 +156,7 @@ function CourtForm({ coordinates, onCreated, onCancel }: CourtFormProps) {
       </div>
 
       <div>
-        <label htmlFor="condition">Condition</label>
+        <label htmlFor="condition">Состояние</label>
         <select
           id="condition"
           value={condition}
@@ -112,7 +164,7 @@ function CourtForm({ coordinates, onCreated, onCancel }: CourtFormProps) {
           required
         >
           <option value="" disabled>
-            Select condition
+            Выберите состояние
           </option>
           {CONDITIONS.map((value) => (
             <option key={value} value={value}>
@@ -123,7 +175,7 @@ function CourtForm({ coordinates, onCreated, onCancel }: CourtFormProps) {
       </div>
 
       <div>
-        <label htmlFor="photo">Photo (optional)</label>
+        <label htmlFor="photo">Фото (необязательно)</label>
         <input id="photo" type="file" accept="image/jpeg,image/png" onChange={handlePhotoChange} />
       </div>
 
@@ -131,10 +183,10 @@ function CourtForm({ coordinates, onCreated, onCancel }: CourtFormProps) {
 
       <div className="court-form__actions">
         <button type="submit" disabled={submitting}>
-          {submitting ? 'Adding…' : 'Add court'}
+          {submitting ? 'Добавление…' : 'Добавить площадку'}
         </button>
         <button type="button" onClick={onCancel} disabled={submitting}>
-          Cancel
+          Отмена
         </button>
       </div>
     </form>

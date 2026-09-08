@@ -1,6 +1,6 @@
 import type { components } from '../types/court'
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000'
+export const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000'
 
 export type Court = components['schemas']['Court']
 
@@ -11,13 +11,16 @@ export interface BBox {
   max_lon: number
 }
 
-export async function getCourts(bbox: BBox): Promise<Court[]> {
+export async function getCourts(bbox?: BBox): Promise<Court[]> {
   const params = new URLSearchParams()
-  for (const [key, value] of Object.entries(bbox)) {
-    params.set(key, String(value))
+  if (bbox != null) {
+    for (const [key, value] of Object.entries(bbox)) {
+      params.set(key, String(value))
+    }
   }
 
-  const res = await fetch(`${BASE_URL}/courts?${params.toString()}`)
+  const query = params.toString()
+  const res = await fetch(`${BASE_URL}/courts${query === '' ? '' : `?${query}`}`)
   if (!res.ok) {
     throw new Error(`GET /courts failed: ${res.status} ${res.statusText}`)
   }
@@ -41,6 +44,7 @@ export interface CreateCourtParams {
   condition: string
   has_lighting: boolean
   description?: string
+  address?: string
   photo?: File
 }
 
@@ -54,6 +58,7 @@ export async function createCourt(params: CreateCourtParams): Promise<Court> {
   formData.set('has_lighting', String(params.has_lighting))
   if (params.name != null) formData.set('name', params.name)
   if (params.description != null) formData.set('description', params.description)
+  if (params.address != null) formData.set('address', params.address)
   if (params.photo != null) formData.set('photo', params.photo)
 
   const res = await fetch(`${BASE_URL}/courts`, { method: 'POST', body: formData })
