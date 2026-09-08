@@ -53,6 +53,7 @@ def create_court(
     condition: str = Form(...),
     has_lighting: bool = Form(...),
     description: Optional[str] = Form(default=None),
+    address: Optional[str] = Form(default=None),
     photo: Optional[UploadFile] = None,
     session: Session = Depends(get_session),
 ) -> Court:
@@ -78,6 +79,7 @@ def create_court(
         condition=condition,
         has_lighting=has_lighting,
         description=description,
+        address=address,
         photo_url=photo_url,
     )
     session.add(court)

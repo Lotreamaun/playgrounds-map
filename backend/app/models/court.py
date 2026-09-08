@@ -13,6 +13,7 @@ class CourtBase(SQLModel):
     condition: str
     has_lighting: bool
     description: Optional[str] = None
+    address: Optional[str] = None
     photo_url: Optional[str] = None
     attributes: Optional[dict[str, Any]] = Field(default=None, sa_column=Column(JSON))
 
