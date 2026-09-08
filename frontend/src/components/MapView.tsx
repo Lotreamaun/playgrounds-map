@@ -23,9 +23,12 @@ interface MapViewProps {
   onCourtsChange: (courts: Court[]) => void
   addMode: boolean
   onMapClick: (latitude: number, longitude: number) => void
+  selectedCourt?: Court | null
+  onMarkerTap?: (court: Court) => void
+  isMobile?: boolean
 }
 
-function MapView({ courts, onCourtsChange, addMode, onMapClick }: MapViewProps) {
+function MapView({ courts, onCourtsChange, addMode, onMapClick, selectedCourt, onMarkerTap, isMobile }: MapViewProps) {
   const [modules, setModules] = useState<YandexMapsModules | null>(null)
   const [error, setError] = useState<string | null>(() =>
     API_KEY == null || API_KEY === ''
@@ -42,6 +45,14 @@ function MapView({ courts, onCourtsChange, addMode, onMapClick }: MapViewProps) 
   useEffect(() => {
     addModeRef.current = addMode
   }, [addMode])
+
+  useEffect(() => {
+    if (selectedCourt == null) return
+    mapInstanceRef.current?.setLocation({
+      center: [selectedCourt.longitude, selectedCourt.latitude],
+      zoom: DEFAULT_ZOOM,
+    })
+  }, [selectedCourt])
 
   useEffect(() => {
     if (API_KEY == null || API_KEY === '') return
@@ -156,7 +167,13 @@ function MapView({ courts, onCourtsChange, addMode, onMapClick }: MapViewProps) 
 
   const renderMarker = (feature: CourtFeature) => (
     <YMapMarker key={feature.id} coordinates={feature.geometry.coordinates} source="courts">
-      <CourtMarker court={feature.properties.court} addMode={addMode} />
+      <CourtMarker
+        court={feature.properties.court}
+        addMode={addMode}
+        isSelected={selectedCourt != null && feature.properties.court.id === selectedCourt.id}
+        onMobileTap={onMarkerTap}
+        isMobile={isMobile}
+      />
     </YMapMarker>
   )
 
