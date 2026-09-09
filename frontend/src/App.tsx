@@ -3,13 +3,18 @@ import MapView from './components/MapView'
 import CourtForm from './components/CourtForm'
 import CourtList from './components/CourtList'
 import BottomSheet from './components/BottomSheet'
+import SidePanel from './components/SidePanel'
 import { CourtCard } from './components/CourtMarker'
 import type { Coordinates } from './components/CourtForm'
 import { getCourts } from './services/api'
 import type { Court } from './services/api'
 import { useMediaQuery } from './hooks/useMediaQuery'
 
-type SheetState = { type: 'none' } | { type: 'card'; court: Court } | { type: 'list' }
+type SheetState =
+  | { type: 'none' }
+  | { type: 'card'; court: Court }
+  | { type: 'list' }
+  | { type: 'form' }
 
 function App() {
   const isMobile = useMediaQuery('(max-width: 767px)')
@@ -17,15 +22,12 @@ function App() {
   const [addMode, setAddMode] = useState(false)
   const [pick, setPick] = useState<Coordinates | null>(null)
   const [selectedCourt, setSelectedCourt] = useState<Court | null>(null)
-  const [view, setView] = useState<'map' | 'list'>('map')
   const [sheet, setSheet] = useState<SheetState>({ type: 'none' })
   const [listCourts, setListCourts] = useState<Court[]>([])
   const [allCourtsLoaded, setAllCourtsLoaded] = useState(false)
 
   useEffect(() => {
     if (allCourtsLoaded) return
-    const needsFullList = isMobile || (!isMobile && view === 'list')
-    if (!needsFullList) return
     getCourts()
       .then((all) => {
         setListCourts(all)
@@ -34,58 +36,47 @@ function App() {
       .catch((err) => {
         console.error('Failed to fetch all courts:', err)
       })
-  }, [isMobile, view, allCourtsLoaded])
+  }, [allCourtsLoaded])
 
   const handleMapClick = useCallback((latitude: number, longitude: number) => {
     setPick({ latitude, longitude })
+    setSheet({ type: 'form' })
   }, [])
 
   const handleCreated = useCallback((court: Court) => {
     setCourts((prev) => [...prev.filter((c) => c.id !== court.id), court])
     setAddMode(false)
     setPick(null)
+    setSheet({ type: 'none' })
   }, [])
 
-  const handleSelectCourt = useCallback(
-    (court: Court) => {
-      setSelectedCourt(court)
-      if (isMobile) {
-        setSheet({ type: 'card', court })
-      } else {
-        setView('map')
-      }
-    },
-    [isMobile],
-  )
-
-  const handleMarkerTap = useCallback(
-    (court: Court) => {
-      if (!isMobile) return
-      setSelectedCourt(court)
-      setSheet({ type: 'card', court })
-    },
-    [isMobile],
-  )
+  const handleSelectCourt = useCallback((court: Court) => {
+    setSelectedCourt(court)
+    setSheet({ type: 'card', court })
+  }, [])
 
   const handleAddToggle = useCallback(() => {
     setAddMode((prev) => {
       const next = !prev
-      if (!next) setPick(null)
+      if (next) {
+        if (!isMobile) setSheet({ type: 'form' })
+      } else {
+        setPick(null)
+        setSheet({ type: 'none' })
+      }
       return next
     })
-  }, [])
-
-  const handleAddSuccess = useCallback(
-    (court: Court) => {
-      handleCreated(court)
-      setSheet({ type: 'none' })
-    },
-    [handleCreated],
-  )
+  }, [isMobile])
 
   const handleCancelAdd = useCallback(() => {
     setAddMode(false)
     setPick(null)
+    setSheet({ type: 'none' })
+  }, [])
+
+  const handleCloseSheet = useCallback(() => {
+    setSheet({ type: 'none' })
+    setSelectedCourt(null)
   }, [])
 
   const handleOpenList = useCallback(() => {
@@ -93,25 +84,54 @@ function App() {
     setSelectedCourt(null)
   }, [])
 
-  const formOpen = addMode && pick != null
   const fabVisible = isMobile && !addMode && sheet.type === 'none'
   const cancelFabVisible = isMobile && addMode && pick == null
 
   return (
     <>
-      {view === 'map' || isMobile ? (
+      <div className="app-shell">
+        {!isMobile && (
+          <SidePanel open>
+            {sheet.type === 'card' && (
+              <div key="card" className="side-panel__pane side-panel__card">
+                <button
+                  type="button"
+                  className="side-panel__close"
+                  aria-label="Закрыть карточку площадки"
+                  onClick={handleCloseSheet}
+                >
+                  ×
+                </button>
+                <CourtCard court={sheet.court} />
+              </div>
+            )}
+
+            {sheet.type === 'form' && (
+              <div key="form" className="side-panel__pane">
+                <CourtForm coordinates={pick} onCreated={handleCreated} onCancel={handleCancelAdd} />
+              </div>
+            )}
+
+            {(sheet.type === 'none' || sheet.type === 'list') && (
+              <div key="list" className="side-panel__pane side-panel__list">
+                <button type="button" className="side-panel__add-btn" onClick={handleAddToggle}>
+                  Добавить площадку
+                </button>
+                <CourtList courts={listCourts} onSelect={handleSelectCourt} />
+              </div>
+            )}
+          </SidePanel>
+        )}
+
         <MapView
           courts={courts}
           onCourtsChange={setCourts}
           addMode={addMode}
           onMapClick={handleMapClick}
           selectedCourt={selectedCourt}
-          onMarkerTap={handleMarkerTap}
-          isMobile={isMobile}
+          onMarkerTap={handleSelectCourt}
         />
-      ) : (
-        <CourtList courts={listCourts} onSelect={handleSelectCourt} />
-      )}
+      </div>
 
       {isMobile && (
         <>
@@ -137,53 +157,19 @@ function App() {
             <div className="mobile-add-hint">Нажмите на карту, чтобы выбрать точку</div>
           )}
 
-          <BottomSheet
-            open={sheet.type === 'card'}
-            onClose={() => setSheet({ type: 'none' })}
-          >
+          <BottomSheet open={sheet.type === 'card'} onClose={handleCloseSheet}>
             {sheet.type === 'card' && <CourtCard court={sheet.court} />}
           </BottomSheet>
 
-          <BottomSheet
-            open={sheet.type === 'list'}
-            onClose={() => setSheet({ type: 'none' })}
-          >
+          <BottomSheet open={sheet.type === 'list'} onClose={handleCloseSheet}>
             {sheet.type === 'list' && <CourtList courts={listCourts} onSelect={handleSelectCourt} />}
           </BottomSheet>
 
-          <BottomSheet open={formOpen} modal onClose={handleCancelAdd}>
-            {formOpen && (
-              <CourtForm
-                coordinates={pick}
-                onCreated={handleAddSuccess}
-                onCancel={handleCancelAdd}
-              />
+          <BottomSheet open={sheet.type === 'form'} modal onClose={handleCancelAdd}>
+            {sheet.type === 'form' && (
+              <CourtForm coordinates={pick} onCreated={handleCreated} onCancel={handleCancelAdd} />
             )}
           </BottomSheet>
-        </>
-      )}
-
-      {!isMobile && (
-        <>
-          <button
-            type="button"
-            className="view-toggle"
-            onClick={() => setView((prev) => (prev === 'map' ? 'list' : 'map'))}
-          >
-            {view === 'map' ? 'Список' : 'Карта'}
-          </button>
-          {view === 'map' && (
-            <button type="button" className="add-court-button" onClick={handleAddToggle}>
-              {addMode ? 'Отмена' : 'Добавить площадку'}
-            </button>
-          )}
-          {addMode && (
-            <CourtForm
-              coordinates={pick}
-              onCreated={handleCreated}
-              onCancel={handleCancelAdd}
-            />
-          )}
         </>
       )}
     </>

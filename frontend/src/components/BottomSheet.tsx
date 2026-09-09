@@ -38,8 +38,10 @@ function BottomSheet({ open, modal = false, onClose, children }: BottomSheetProp
       const el = sheetRef.current
       const overflow = el == null ? 1 : Math.max(1, el.offsetHeight - PEEK_HEIGHT)
       setOffset(overflow)
-      setSheetState(modal ? 'expanded' : 'peek')
-      setTranslateY(modal ? 0 : overflow)
+      // Open fully expanded rather than peeking — requiring an extra drag to see
+      // content is a UX dead end. The peek state stays reachable by dragging down.
+      setSheetState('expanded')
+      setTranslateY(0)
     } else {
       setTranslateY(typeof window !== 'undefined' ? window.innerHeight + 20 : 1200)
     }

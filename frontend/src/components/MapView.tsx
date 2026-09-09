@@ -24,11 +24,10 @@ interface MapViewProps {
   addMode: boolean
   onMapClick: (latitude: number, longitude: number) => void
   selectedCourt?: Court | null
-  onMarkerTap?: (court: Court) => void
-  isMobile?: boolean
+  onMarkerTap: (court: Court) => void
 }
 
-function MapView({ courts, onCourtsChange, addMode, onMapClick, selectedCourt, onMarkerTap, isMobile }: MapViewProps) {
+function MapView({ courts, onCourtsChange, addMode, onMapClick, selectedCourt, onMarkerTap }: MapViewProps) {
   const [modules, setModules] = useState<YandexMapsModules | null>(null)
   const [error, setError] = useState<string | null>(() =>
     API_KEY == null || API_KEY === ''
@@ -37,6 +36,8 @@ function MapView({ courts, onCourtsChange, addMode, onMapClick, selectedCourt, o
   )
   const mapInstanceRef = useRef<{
     bounds: [[number, number], [number, number]]
+    zoom: number
+    zoomRange: { min: number; max: number }
     setLocation: (location: { center?: [number, number]; zoom?: number }) => void
   } | null>(null)
   const debounceRef = useRef<number | null>(null)
@@ -48,9 +49,10 @@ function MapView({ courts, onCourtsChange, addMode, onMapClick, selectedCourt, o
 
   useEffect(() => {
     if (selectedCourt == null) return
+    // Center-only: per the SDK, an update without `zoom` leaves the current
+    // zoom untouched, so selecting a court never fights the user's own zoom.
     mapInstanceRef.current?.setLocation({
       center: [selectedCourt.longitude, selectedCourt.latitude],
-      zoom: DEFAULT_ZOOM,
     })
   }, [selectedCourt])
 
@@ -129,6 +131,17 @@ function MapView({ courts, onCourtsChange, addMode, onMapClick, selectedCourt, o
     }
   }, [])
 
+  const handleClusterClick = useCallback((coordinates: [number, number]) => {
+    const map = mapInstanceRef.current
+    if (map == null) return
+
+    // A raw bounds-fit overshoots for a cluster's (often tiny) coordinate
+    // extent and then visibly snaps back once the SDK clamps to its max
+    // zoom. A fixed step in is smooth and reliably splits a 64px grid
+    // cluster apart (each level roughly doubles on-screen separation).
+    map.setLocation({ center: coordinates, zoom: Math.min(map.zoom + 3, map.zoomRange.max) })
+  }, [])
+
   const features = useMemo<CourtFeature[]>(
     () =>
       courts.map((court) => ({
@@ -171,8 +184,7 @@ function MapView({ courts, onCourtsChange, addMode, onMapClick, selectedCourt, o
         court={feature.properties.court}
         addMode={addMode}
         isSelected={selectedCourt != null && feature.properties.court.id === selectedCourt.id}
-        onMobileTap={onMarkerTap}
-        isMobile={isMobile}
+        onSelect={onMarkerTap}
       />
     </YMapMarker>
   )
@@ -183,7 +195,14 @@ function MapView({ courts, onCourtsChange, addMode, onMapClick, selectedCourt, o
       coordinates={coordinates}
       source="courts"
     >
-      <div className="court-cluster">{clustered.length}</div>
+      <button
+        type="button"
+        className="court-cluster"
+        aria-label={`Показать ${clustered.length} площадок`}
+        onClick={() => handleClusterClick(coordinates)}
+      >
+        {clustered.length}
+      </button>
     </YMapMarker>
   )
 

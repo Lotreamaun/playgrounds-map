@@ -3,6 +3,7 @@ import type { ChangeEvent, FormEvent } from 'react'
 import { createCourt } from '../services/api'
 import type { Court } from '../services/api'
 import { reverseGeocode } from '../services/yandexMaps'
+import { SURFACE_LABELS, CONDITION_LABELS } from '../utils/labels'
 
 export interface Coordinates {
   latitude: number
@@ -15,8 +16,8 @@ interface CourtFormProps {
   onCancel: () => void
 }
 
-const SURFACES = ['asphalt', 'rubber', 'grass', 'sand', 'wood', 'other']
-const CONDITIONS = ['excellent', 'good', 'fair', 'poor']
+const SURFACES = Object.keys(SURFACE_LABELS)
+const CONDITIONS = Object.keys(CONDITION_LABELS)
 const API_KEY = import.meta.env.VITE_YANDEX_GEOCODER_KEY as string | undefined
 
 const addressCache = new Map<string, string | null>()
@@ -149,7 +150,7 @@ function CourtForm({ coordinates, onCreated, onCancel }: CourtFormProps) {
           </option>
           {SURFACES.map((value) => (
             <option key={value} value={value}>
-              {value}
+              {SURFACE_LABELS[value]}
             </option>
           ))}
         </select>
@@ -168,7 +169,7 @@ function CourtForm({ coordinates, onCreated, onCancel }: CourtFormProps) {
           </option>
           {CONDITIONS.map((value) => (
             <option key={value} value={value}>
-              {value}
+              {CONDITION_LABELS[value]}
             </option>
           ))}
         </select>

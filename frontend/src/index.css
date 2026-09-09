@@ -65,8 +65,15 @@ body {
   margin: 0;
 }
 
-.map-view {
+.app-shell {
+  display: flex;
   width: 100%;
+  height: 100svh;
+}
+
+.map-view {
+  flex: 1;
+  min-width: 0;
   height: 100svh;
 }
 
@@ -84,29 +91,25 @@ body {
 }
 
 .court-marker__pin {
-  width: 16px;
-  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
   padding: 0;
   border: 2px solid #fff;
   border-radius: 50%;
   cursor: pointer;
   background: var(--accent);
   box-shadow: var(--shadow);
+  font-size: 13px;
+  line-height: 1;
   transform: translate(-50%, -50%);
+  transition: transform 150ms ease-out;
 }
 
-.court-marker__popup {
-  position: absolute;
-  bottom: calc(100% + 4px);
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 10;
-  width: 220px;
-  padding: 12px;
-  border-radius: 8px;
-  background: var(--bg);
-  box-shadow: var(--shadow);
-  font-size: 13px;
+.court-marker__pin--selected {
+  transform: translate(-50%, -50%) scale(1.25);
 }
 
 .court-cluster {
@@ -115,8 +118,12 @@ body {
   justify-content: center;
   width: 32px;
   height: 32px;
+  padding: 0;
+  border: none;
   border-radius: 50%;
+  cursor: pointer;
   color: #fff;
+  font: inherit;
   font-size: 13px;
   font-weight: 600;
   background: var(--accent);
@@ -128,7 +135,7 @@ body {
   display: block;
   width: 100%;
   padding: 0;
-  margin-top: 8px;
+  margin: 0 0 12px;
   border: none;
   background: none;
   cursor: pointer;
@@ -137,9 +144,30 @@ body {
 .court-card__photo {
   display: block;
   width: 100%;
-  aspect-ratio: 1 / 1;
+  aspect-ratio: 16 / 9;
   object-fit: cover;
-  border-radius: 6px;
+  border-radius: 8px;
+}
+
+/* Bleed the cover photo to the edges of whichever container hosts the card. */
+.bottom-sheet__content .court-card__photo-btn {
+  width: calc(100% + 32px);
+  margin: 0 -16px 12px;
+}
+
+.side-panel__content .court-card__photo-btn {
+  width: calc(100% + 32px);
+  margin: -16px -16px 12px;
+}
+
+.bottom-sheet__content .court-card__photo,
+.side-panel__content .court-card__photo {
+  border-radius: 0;
+}
+
+.court-card__body {
+  display: flex;
+  flex-direction: column;
 }
 
 .court-photo-lightbox {
@@ -190,15 +218,6 @@ body {
 }
 
 .court-form {
-  position: absolute;
-  z-index: 1000;
-  top: 12px;
-  right: 12px;
-  width: 280px;
-  padding: 16px;
-  border-radius: 8px;
-  background: var(--bg);
-  box-shadow: var(--shadow);
   font-size: 14px;
 }
 
@@ -266,10 +285,9 @@ body {
 
 .court-list {
   width: 100%;
-  height: 100svh;
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
-  padding: 12px;
-  box-sizing: border-box;
 }
 
 .court-list__toolbar {
@@ -320,10 +338,12 @@ body {
   text-align: left;
   background: var(--bg);
   box-shadow: var(--shadow);
+  transition: transform 150ms ease-out, border-color 150ms ease-out;
 }
 
 .court-list__row:hover {
   border-color: var(--accent-border);
+  transform: translateY(-1px);
 }
 
 .court-list__row-title {
@@ -361,27 +381,88 @@ body {
   font-weight: 600;
 }
 
-.view-toggle {
-  position: absolute;
-  z-index: 1000;
-  left: 12px;
-  top: 12px;
-  padding: 10px 16px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font: inherit;
-  font-size: 14px;
-  color: #fff;
-  background: var(--accent);
+.side-panel {
+  flex: 0 0 380px;
+  width: 380px;
+  max-width: 90vw;
+  height: 100svh;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
   box-shadow: var(--shadow);
+  transform: translateX(-100%);
+  opacity: 0;
+  transition: transform 0.3s ease, opacity 0.3s ease;
 }
 
-.add-court-button {
+.side-panel--open {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+.side-panel__content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+.side-panel__pane {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  animation: side-panel-fade-in 200ms ease-out;
+}
+
+@keyframes side-panel-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.side-panel__card {
+  position: relative;
+}
+
+.side-panel__close {
   position: absolute;
-  z-index: 1000;
-  left: 12px;
-  bottom: 12px;
+  top: 0;
+  right: 0;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--text-h);
+  background: var(--border);
+}
+
+.side-panel__close:hover {
+  background: var(--accent-border);
+}
+
+.side-panel__list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+  min-height: 0;
+}
+
+.side-panel__add-btn {
+  align-self: flex-start;
   padding: 10px 16px;
   border: none;
   border-radius: 6px;
@@ -511,11 +592,6 @@ code {
     height: 100dvh;
   }
 
-  .view-toggle,
-  .add-court-button {
-    display: none;
-  }
-
   .mobile-top-bar {
     position: fixed;
     top: calc(env(safe-area-inset-top) + 8px);
@@ -603,13 +679,6 @@ code {
   }
 
   .court-form {
-    position: static;
-    top: auto;
-    right: auto;
-    width: auto;
-    padding: 8px 0 0;
-    border-radius: 0;
-    box-shadow: none;
     font-size: 15px;
   }
 
@@ -634,11 +703,6 @@ code {
     font-size: 16px;
   }
 
-  .court-list {
-    height: auto;
-    padding: 0;
-  }
-
   .court-list__toolbar {
     flex-direction: column;
     align-items: flex-start;
@@ -660,8 +724,66 @@ code {
   }
 
   .court-marker__pin {
-    width: 22px;
-    height: 22px;
+    width: 28px;
+    height: 28px;
+    font-size: 15px;
   }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .side-panel {
+    transition: none;
+  }
+
+  .side-panel__pane {
+    animation: none;
+  }
+
+  .court-marker__pin {
+    transition: none;
+  }
+
+  .court-list__row {
+    transition: none;
+  }
+}
+
+/*
+ * @yandex/ymaps3-default-ui-theme only exposes CSS custom properties for popup
+ * tail geometry, not control colors — zoom/geolocation icons ship as data-URI
+ * backgrounds with a hardcoded fill. Recolor them to --accent via mask-image
+ * (same shape, alpha-only) instead of a custom-property override.
+ */
+.ymaps3--zoom-control__in,
+.ymaps3--zoom-control__out,
+.ymaps3--zoom-control__dark-in,
+.ymaps3--zoom-control__dark-out,
+.ymaps3--geolocation-control,
+.ymaps3--geolocation-control__dark {
+  background-image: none !important;
+  background-color: var(--accent) !important;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+}
+
+.ymaps3--zoom-control__in,
+.ymaps3--zoom-control__dark-in {
+  -webkit-mask-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik0xMSA1Ljk5MmMwLS41MzcuNDQ4LS45OTIgMS0uOTkyLjU1NiAwIDEgLjQ0NCAxIC45OTJWMTFoNS4wMDhjLjUzNyAwIC45OTIuNDQ4Ljk5MiAxIDAgLjU1Ni0uNDQ0IDEtLjk5MiAxSDEzdjUuMDA4YzAgLjUzNy0uNDQ4Ljk5Mi0xIC45OTItLjU1NiAwLTEtLjQ0NC0xLS45OTJWMTNINS45OTJDNS40NTUgMTMgNSAxMi41NTIgNSAxMmMwLS41NTYuNDQ0LTEgLjk5Mi0xSDExVjUuOTkyeiIgZmlsbD0iIzRkNGQ0ZCIvPjwvc3ZnPgo=');
+  mask-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik0xMSA1Ljk5MmMwLS41MzcuNDQ4LS45OTIgMS0uOTkyLjU1NiAwIDEgLjQ0NCAxIC45OTJWMTFoNS4wMDhjLjUzNyAwIC45OTIuNDQ4Ljk5MiAxIDAgLjU1Ni0uNDQ0IDEtLjk5MiAxSDEzdjUuMDA4YzAgLjUzNy0uNDQ4Ljk5Mi0xIC45OTItLjU1NiAwLTEtLjQ0NC0xLS45OTJWMTNINS45OTJDNS40NTUgMTMgNSAxMi41NTIgNSAxMmMwLS41NTYuNDQ0LTEgLjk5Mi0xSDExVjUuOTkyeiIgZmlsbD0iIzRkNGQ0ZCIvPjwvc3ZnPgo=');
+}
+
+.ymaps3--zoom-control__out,
+.ymaps3--zoom-control__dark-out {
+  -webkit-mask-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik01IDEyYTEgMSAwIDAgMSAxLTFoMTJhMSAxIDAgMSAxIDAgMkg2YTEgMSAwIDAgMS0xLTF6IiBmaWxsPSIjNGQ0ZDRkIi8+PC9zdmc+Cg==');
+  mask-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik01IDEyYTEgMSAwIDAgMSAxLTFoMTJhMSAxIDAgMSAxIDAgMkg2YTEgMSAwIDAgMS0xLTF6IiBmaWxsPSIjNGQ0ZDRkIi8+PC9zdmc+Cg==');
+}
+
+.ymaps3--geolocation-control,
+.ymaps3--geolocation-control__dark {
+  -webkit-mask-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTQiIGhlaWdodD0iMTQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTEuMzE1IDYuNzNjLS40ODIuMjI3LS4zOS45NC4xMzQgMS4wMzdsNC4wNi43MjQuNzIzIDQuMDZjLjA5OC41MjUuODEuNjE3IDEuMDM3LjEzNWw0LjY3NS05LjlhLjU1LjU1IDAgMCAwLS43MzItLjczbC05LjkgNC42NzRoLjAwMnoiIGZpbGw9IiM0ZDRkNGQiLz48L3N2Zz4K');
+  mask-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTQiIGhlaWdodD0iMTQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTEuMzE1IDYuNzNjLS40ODIuMjI3LS4zOS45NC4xMzQgMS4wMzdsNC4wNi43MjQuNzIzIDQuMDZjLjA5OC41MjUuODEuNjE3IDEuMDM3LjEzNWw0LjY3NS05LjlhLjU1LjU1IDAgMCAwLS43MzItLjczbC05LjkgNC42NzRoLjAwMnoiIGZpbGw9IiM0ZDRkNGQiLz48L3N2Zz4K');
+  -webkit-mask-size: 24px 24px;
+  mask-size: 24px 24px;
+}

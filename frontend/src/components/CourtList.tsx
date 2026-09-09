@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { Court } from '../services/api'
 import { distanceHaversine, sortByDistance } from '../utils/distance'
+import { translateSurface, translateCondition } from '../utils/labels'
 
 interface CourtListProps {
   courts: Court[]
@@ -84,8 +85,8 @@ function CourtList({ courts, onSelect }: CourtListProps) {
                   <p className="court-list__row-address">{address}</p>
                 </div>
                 <div className="court-list__row-meta">
-                  <span className="court-list__row-surface">{court.surface}</span>
-                  <span className="court-list__row-condition">{court.condition}</span>
+                  <span className="court-list__row-surface">{translateSurface(court.surface)}</span>
+                  <span className="court-list__row-condition">{translateCondition(court.condition)}</span>
                   {distance != null && (
                     <span className="court-list__row-distance">
                       {distance < 1
