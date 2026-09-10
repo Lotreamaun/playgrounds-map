@@ -40,8 +40,8 @@
 
 ## 8. Verification
 
-- [ ] 8.1 Manually verify desktop flow: select marker → card in side panel → close via × → open list in side panel → add court via side panel form → new marker appears with sport icon
-- [ ] 8.2 Manually verify mobile flow still works unchanged: bottom sheet for card/list, full-screen modal for add form, no regression from the shared `SheetState` refactor
-- [ ] 8.3 Verify all surface/condition values render in Russian in the form, card, and list on both breakpoints
-- [ ] 8.4 Verify native map controls visually match the app's accent color and do not overlap app chrome on desktop
-- [ ] 8.5 Verify animations are smooth at 60fps (transform/opacity only) and that enabling OS-level reduced motion visibly shortens/removes them
+- [x] 8.1 Manually verify desktop flow: select marker → card in side panel → close via × → open list in side panel → add court via side panel form → new marker appears with sport icon
+- [x] 8.2 Manually verify mobile flow still works unchanged: bottom sheet for card/list, full-screen modal for add form, no regression from the shared `SheetState` refactor
+- [x] 8.3 Verify all surface/condition values render in Russian in the form, card, and list on both breakpoints
+- [x] 8.4 Verify native map controls visually match the app's accent color and do not overlap app chrome on desktop
+- [x] 8.5 Verify animations are smooth at 60fps (transform/opacity only) and that enabling OS-level reduced motion visibly shortens/removes them
