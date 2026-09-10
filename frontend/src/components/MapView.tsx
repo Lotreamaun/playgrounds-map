@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { getCourts } from '../services/api'
 import type { Court } from '../services/api'
 import CourtMarker from './CourtMarker'
+import type { Coordinates } from './CourtForm'
 import { loadYandexMaps } from '../services/yandexMaps'
 import type { YandexMapsModules } from '../services/yandexMaps'
 
@@ -10,6 +11,34 @@ const DEFAULT_ZOOM = 12
 const DEBOUNCE_MS = 250
 const INITIAL_LOCATION = { center: TBILISI_CENTER, zoom: DEFAULT_ZOOM }
 const API_KEY = import.meta.env.VITE_YANDEX_MAPS_KEY as string | undefined
+const GRID_SIZE_PX = 64
+
+function clusterZoomForExtent(
+  coords: [number, number][],
+  currentZoom: number,
+  maxZoom: number,
+): number {
+  if (coords.length < 2) return currentZoom
+  let minLon = Infinity
+  let maxLon = -Infinity
+  let minLat = Infinity
+  let maxLat = -Infinity
+  for (const [lon, lat] of coords) {
+    if (lon < minLon) minLon = lon
+    if (lon > maxLon) maxLon = lon
+    if (lat < minLat) minLat = lat
+    if (lat > maxLat) maxLat = lat
+  }
+  const extentDeg = Math.max(maxLon - minLon, maxLat - minLat)
+  if (extentDeg === 0) return maxZoom
+  let z = currentZoom
+  while (z < maxZoom) {
+    const pxPerDeg = (256 * 2 ** z) / 360
+    if (extentDeg * pxPerDeg > GRID_SIZE_PX) break
+    z++
+  }
+  return Math.min(z, maxZoom)
+}
 
 interface CourtFeature {
   type: 'Feature'
@@ -23,11 +52,12 @@ interface MapViewProps {
   onCourtsChange: (courts: Court[]) => void
   addMode: boolean
   onMapClick: (latitude: number, longitude: number) => void
+  pick?: Coordinates | null
   selectedCourt?: Court | null
   onMarkerTap: (court: Court) => void
 }
 
-function MapView({ courts, onCourtsChange, addMode, onMapClick, selectedCourt, onMarkerTap }: MapViewProps) {
+function MapView({ courts, onCourtsChange, addMode, onMapClick, pick, selectedCourt, onMarkerTap }: MapViewProps) {
   const [modules, setModules] = useState<YandexMapsModules | null>(null)
   const [error, setError] = useState<string | null>(() =>
     API_KEY == null || API_KEY === ''
@@ -55,6 +85,13 @@ function MapView({ courts, onCourtsChange, addMode, onMapClick, selectedCourt, o
       center: [selectedCourt.longitude, selectedCourt.latitude],
     })
   }, [selectedCourt])
+
+  useEffect(() => {
+    if (pick == null) return
+    mapInstanceRef.current?.setLocation({
+      center: [pick.longitude, pick.latitude],
+    })
+  }, [pick])
 
   useEffect(() => {
     if (API_KEY == null || API_KEY === '') return
@@ -131,15 +168,13 @@ function MapView({ courts, onCourtsChange, addMode, onMapClick, selectedCourt, o
     }
   }, [])
 
-  const handleClusterClick = useCallback((coordinates: [number, number]) => {
+  const handleClusterClick = useCallback((coordinates: [number, number], clustered: CourtFeature[]) => {
     const map = mapInstanceRef.current
     if (map == null) return
 
-    // A raw bounds-fit overshoots for a cluster's (often tiny) coordinate
-    // extent and then visibly snaps back once the SDK clamps to its max
-    // zoom. A fixed step in is smooth and reliably splits a 64px grid
-    // cluster apart (each level roughly doubles on-screen separation).
-    map.setLocation({ center: coordinates, zoom: Math.min(map.zoom + 3, map.zoomRange.max) })
+    const coords = clustered.map((f) => f.geometry.coordinates)
+    const targetZoom = clusterZoomForExtent(coords, map.zoom, map.zoomRange.max)
+    map.setLocation({ center: coordinates, zoom: targetZoom })
   }, [])
 
   const features = useMemo<CourtFeature[]>(
@@ -174,6 +209,7 @@ function MapView({ courts, onCourtsChange, addMode, onMapClick, selectedCourt, o
     clusterByGrid,
     YMapZoomControl,
     YMapGeolocationControl,
+    reactify,
   } = modules
 
   const clusterMethod = clusterByGrid({ gridSize: 64 })
@@ -199,7 +235,7 @@ function MapView({ courts, onCourtsChange, addMode, onMapClick, selectedCourt, o
         type="button"
         className="court-cluster"
         aria-label={`Показать ${clustered.length} площадок`}
-        onClick={() => handleClusterClick(coordinates)}
+        onClick={() => handleClusterClick(coordinates, clustered)}
       >
         {clustered.length}
       </button>
@@ -208,7 +244,8 @@ function MapView({ courts, onCourtsChange, addMode, onMapClick, selectedCourt, o
 
   return (
     <div className="map-view">
-      <YMap location={INITIAL_LOCATION} ref={handleMapRef}>
+      {/* location is seed-only after mount — camera changes must go through setLocation() on the ref, not by changing this prop */}
+      <YMap location={reactify.useDefault(INITIAL_LOCATION)} ref={handleMapRef}>
         <YMapDefaultSchemeLayer />
         <YMapDefaultFeaturesLayer />
         <YMapListener onClick={handleMapClick} onUpdate={scheduleFetch} />
@@ -219,6 +256,11 @@ function MapView({ courts, onCourtsChange, addMode, onMapClick, selectedCourt, o
         <YMapFeatureDataSource id="courts" />
         <YMapLayer source="courts" type="markers" zIndex={1800} />
         <YMapClusterer marker={renderMarker} cluster={renderCluster} method={clusterMethod} features={features} />
+        {pick != null && (
+          <YMapMarker key="pick" coordinates={[pick.longitude, pick.latitude]}>
+            <div className="pick-marker" aria-hidden="true" />
+          </YMapMarker>
+        )}
       </YMap>
     </div>
   )

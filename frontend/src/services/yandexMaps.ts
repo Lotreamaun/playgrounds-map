@@ -33,6 +33,7 @@ export interface YandexMapsModules {
   clusterByGrid: (options: { gridSize: number }) => unknown
   YMapZoomControl: ComponentType<any>
   YMapGeolocationControl: ComponentType<any>
+  reactify: { useDefault: <T>(value: T) => T }
 }
 
 let bootstrapPromise: Promise<YandexMapsModules> | null = null
@@ -69,6 +70,7 @@ export function loadYandexMaps(apiKey: string): Promise<YandexMapsModules> {
         clusterByGrid: clusterer.clusterByGrid,
         YMapZoomControl: theme.YMapZoomControl,
         YMapGeolocationControl: theme.YMapGeolocationControl,
+        reactify,
       } satisfies YandexMapsModules
     })
     .catch((err) => {
