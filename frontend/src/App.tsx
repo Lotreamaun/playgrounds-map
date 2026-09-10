@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import MapView from './components/MapView'
 import CourtForm from './components/CourtForm'
 import CourtList from './components/CourtList'
@@ -25,6 +25,14 @@ function App() {
   const [sheet, setSheet] = useState<SheetState>({ type: 'none' })
   const [listCourts, setListCourts] = useState<Court[]>([])
   const [allCourtsLoaded, setAllCourtsLoaded] = useState(false)
+  const [locating, setLocating] = useState(false)
+  const [locationError, setLocationError] = useState(false)
+  const addModeRef = useRef(addMode)
+  const locateTokenRef = useRef(0)
+
+  useEffect(() => {
+    addModeRef.current = addMode
+  }, [addMode])
 
   useEffect(() => {
     if (allCourtsLoaded) return
@@ -41,13 +49,19 @@ function App() {
   const handleMapClick = useCallback((latitude: number, longitude: number) => {
     setPick({ latitude, longitude })
     setSheet({ type: 'form' })
+    setLocating(false)
+    setLocationError(false)
+    locateTokenRef.current += 1
   }, [])
 
   const handleCreated = useCallback((court: Court) => {
     setCourts((prev) => [...prev.filter((c) => c.id !== court.id), court])
     setAddMode(false)
     setPick(null)
+    setLocating(false)
+    setLocationError(false)
     setSheet({ type: 'none' })
+    locateTokenRef.current += 1
   }, [])
 
   const handleSelectCourt = useCallback((court: Court) => {
@@ -56,23 +70,59 @@ function App() {
   }, [])
 
   const handleAddToggle = useCallback(() => {
-    setAddMode((prev) => {
-      const next = !prev
-      if (next) {
-        if (!isMobile) setSheet({ type: 'form' })
-      } else {
-        setPick(null)
-        setSheet({ type: 'none' })
-      }
-      return next
-    })
-  }, [isMobile])
+    if (addModeRef.current) {
+      locateTokenRef.current += 1
+      setLocating(false)
+      setLocationError(false)
+      setPick(null)
+      setSheet({ type: 'none' })
+      setAddMode(false)
+      return
+    }
+
+    setAddMode(true)
+    setLocationError(false)
+    setSheet({ type: 'form' })
+    const token = ++locateTokenRef.current
+    const isCurrent = () =>
+      token === locateTokenRef.current && addModeRef.current
+
+    if (!navigator.geolocation) {
+      setLocationError(true)
+      return
+    }
+
+    setLocating(true)
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        if (!isCurrent()) return
+        setLocating(false)
+        setPick({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        })
+      },
+      () => {
+        if (!isCurrent()) return
+        setLocating(false)
+        setLocationError(true)
+      },
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 30000 },
+    )
+  }, [])
 
   const handleCancelAdd = useCallback(() => {
+    locateTokenRef.current += 1
     setAddMode(false)
     setPick(null)
+    setLocating(false)
+    setLocationError(false)
     setSheet({ type: 'none' })
   }, [])
+
+  const handlePickOnMap = useCallback(() => {
+    if (isMobile) setSheet({ type: 'none' })
+  }, [isMobile])
 
   const handleCloseSheet = useCallback(() => {
     setSheet({ type: 'none' })
@@ -85,7 +135,8 @@ function App() {
   }, [])
 
   const fabVisible = isMobile && !addMode && sheet.type === 'none'
-  const cancelFabVisible = isMobile && addMode && pick == null
+  const cancelFabVisible =
+    isMobile && addMode && pick == null && !locating && sheet.type !== 'form'
 
   return (
     <>
@@ -108,7 +159,14 @@ function App() {
 
             {sheet.type === 'form' && (
               <div key="form" className="side-panel__pane">
-                <CourtForm coordinates={pick} onCreated={handleCreated} onCancel={handleCancelAdd} />
+                <CourtForm
+                  coordinates={pick}
+                  locating={locating}
+                  locationFailed={locationError}
+                  onPickOnMap={isMobile ? handlePickOnMap : undefined}
+                  onCreated={handleCreated}
+                  onCancel={handleCancelAdd}
+                />
               </div>
             )}
 
@@ -127,6 +185,7 @@ function App() {
           courts={courts}
           onCourtsChange={setCourts}
           addMode={addMode}
+          pick={pick}
           onMapClick={handleMapClick}
           selectedCourt={selectedCourt}
           onMarkerTap={handleSelectCourt}
@@ -167,7 +226,14 @@ function App() {
 
           <BottomSheet open={sheet.type === 'form'} modal onClose={handleCancelAdd}>
             {sheet.type === 'form' && (
-              <CourtForm coordinates={pick} onCreated={handleCreated} onCancel={handleCancelAdd} />
+              <CourtForm
+                coordinates={pick}
+                locating={locating}
+                locationFailed={locationError}
+                onPickOnMap={isMobile ? handlePickOnMap : undefined}
+                onCreated={handleCreated}
+                onCancel={handleCancelAdd}
+              />
             )}
           </BottomSheet>
         </>

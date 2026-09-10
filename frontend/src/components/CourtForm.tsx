@@ -12,6 +12,9 @@ export interface Coordinates {
 
 interface CourtFormProps {
   coordinates: Coordinates | null
+  locating?: boolean
+  locationFailed?: boolean
+  onPickOnMap?: () => void
   onCreated: (court: Court) => void
   onCancel: () => void
 }
@@ -26,7 +29,7 @@ function cacheKey(latitude: number, longitude: number): string {
   return `${latitude.toFixed(6)},${longitude.toFixed(6)}`
 }
 
-function CourtForm({ coordinates, onCreated, onCancel }: CourtFormProps) {
+function CourtForm({ coordinates, locating = false, locationFailed = false, onPickOnMap, onCreated, onCancel }: CourtFormProps) {
   const [surface, setSurface] = useState('')
   const [condition, setCondition] = useState('')
   const [address, setAddress] = useState('')
@@ -116,7 +119,9 @@ function CourtForm({ coordinates, onCreated, onCancel }: CourtFormProps) {
       <div className="court-form__coords">
         <label>Координаты</label>
         <div>
-          {coordinates == null ? (
+          {locating ? (
+            <span>Определяем местоположение…</span>
+          ) : coordinates == null ? (
             <span>Нажмите на карту, чтобы выбрать точку</span>
           ) : (
             <span>
@@ -125,6 +130,18 @@ function CourtForm({ coordinates, onCreated, onCancel }: CourtFormProps) {
           )}
         </div>
       </div>
+
+      {locationFailed && (
+        <div className="court-form__loc-fallback">
+          <p>Не удалось определить местоположение.</p>
+          {onPickOnMap != null && (
+            <button type="button" onClick={onPickOnMap}>
+              Указать на карте
+            </button>
+          )}
+          <p>Выберите точку на карте или укажите адрес вручную.</p>
+        </div>
+      )}
 
       <div>
         <label htmlFor="address">Адрес</label>
