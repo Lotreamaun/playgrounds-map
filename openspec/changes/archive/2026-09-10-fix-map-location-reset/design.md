@@ -7,11 +7,11 @@
 **Goals:**
 - `location` seeds the camera once at mount and is never reapplied by React re-renders, so it stops fighting every imperative `setLocation()` call.
 - All four existing imperative call sites keep working exactly as before, with no behavior change beyond "the position now sticks".
+- Cluster click zooms to a level determined by actual court distances, not a fixed step.
 
 **Non-Goals:**
 - Not converting camera position into React state (`useState` + two-arg `reactify.useDefault(location, [location])`), i.e. not making `location` a fully controlled prop. Nothing in this codebase needs to read the current camera position back into a render, so the larger refactor (touching all four call sites) would add risk without behavioral benefit.
 - Not fixing the separately-discovered `YMapClusterer` per-render recompute churn (`renderMarker`/`renderCluster` in `MapView.tsx` aren't memoized, so the clusterer's React wrapper recomputes on every unrelated re-render). Confirmed unrelated to this bug during investigation; left as a latent performance concern for a future change.
-- Not changing the bounds-fit-vs-fixed-step zoom strategy beyond re-verifying the existing `zoom + 3` step in `handleClusterClick` now that it can actually take effect.
 
 ## Decisions
 
@@ -21,8 +21,8 @@ Every position change in this codebase already goes through the imperative ref (
 **2. Export the whole `reactify` module from `yandexMaps.ts`'s `YandexMapsModules`, not just a hand-picked `useDefault` re-export.**
 `reactify` is already loaded during SDK bootstrap (`ymaps3.import('@yandex/ymaps3-reactify')`) to build the reactified components. Exposing the module itself is the smallest change and keeps other `reactify` helpers available to `MapView.tsx` if needed later, instead of special-casing one function.
 
-**3. Re-verify, don't re-derive, the existing `zoom + 3` step in `handleClusterClick`.**
-That step-based approach already replaced an earlier bounds-fit approach that overshot (see the comment at its call site) but was never actually validated in the field, because the location-reset bug masked whether it worked. Once the reset is fixed, confirm empirically that +3 zoom levels reliably splits a 64px-grid cluster at the zoom levels courts are typically viewed at; adjust the constant only if it doesn't.
+**3. Compute target zoom from the cluster's court extent, not a fixed step.**
+After the location-reset fix, `zoom + 3` was verified empirically: courts close together (e.g. across the street) remain within the same 64px grid cell after a single click. Instead, `handleClusterClick` receives the `clustered` features array, computes a bounding box, and derives the minimum zoom at which the farthest courts separate beyond the grid threshold. This guarantees a single click splits any cluster regardless of density.
 
 ## Risks / Trade-offs
 
