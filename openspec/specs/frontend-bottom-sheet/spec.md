@@ -40,3 +40,15 @@ The add-court form SHALL open as a full-screen modal that slides up from the bot
 #### Scenario: Form is dismissible
 - **WHEN** the user cancels or submits the form
 - **THEN** the modal closes and the map is shown again
+
+### Requirement: Floating mobile controls use a translucent glass surface
+
+Плавающие элементы управления, размещённые поверх карты на мобильном (кнопка добавления FAB, компактный верхний бар), SHALL отображаться с полупрозрачной поверхностью с блюром, а не сплошной непрозрачной заливкой, — чтобы читаться как парящие над картой, а не как отдельная непрозрачная панель.
+
+#### Scenario: FAB floats with a glass surface
+- **WHEN** пользователь видит кнопку добавления (FAB) на мобильном
+- **THEN** она отображается полупрозрачной с блюром, карта частично просматривается сквозь неё
+
+#### Scenario: Top bar floats with a glass surface
+- **WHEN** пользователь видит компактный верхний бар на мобильном
+- **THEN** он отображается полупрозрачным с блюром, а не сплошной непрозрачной заливкой
