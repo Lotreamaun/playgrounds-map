@@ -1,20 +1,61 @@
 @import '@yandex/ymaps3-default-ui-theme/dist/esm/index.css';
+@import url('https://fonts.googleapis.com/css2?family=Commissioner:wght@400;500;600;700;800&display=swap');
 
 :root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
+  --text: #71717a;
+  --text-h: #18181b;
+  --bg: #fafafa;
+  --border: #e4e4e7;
   --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
+  --accent: #2a2d34;
+  --accent-hover: #3f434c;
+  --accent-bg: rgba(42, 45, 52, 0.14);
+  --accent-focus: var(--accent-bg);
+  --accent-border: var(--accent);
+  --text-on-accent: #ffffff;
   --social-bg: rgba(244, 243, 236, 0.5);
   --shadow:
     rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
+  --surface: #ffffff;
+  --text-primary: var(--text-h);
+  --text-secondary: var(--text);
+
+  --sport-basketball: #c56a3d;
+  --sport-football: #4f8a54;
+  --sport-hockey: #a83a46;
+  --sport-tennis: #a8c23f;
+
+  --feedback-error: #b3261e;
+  --feedback-error-bg: rgba(179, 38, 30, 0.08);
+  --feedback-success: var(--accent);
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 32px;
+  --space-8: 48px;
+  --space-9: 64px;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-pill: 999px;
+
+  --motion-instant: 120ms;
+  --motion-fast: 200ms;
+  --motion-base: 300ms;
+  --motion-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  --shadow-1: 0 1px 3px rgba(0, 0, 0, 0.06);
+  --shadow-2: 0 4px 16px rgba(0, 0, 0, 0.12);
+  --shadow-3: 0 12px 32px rgba(0, 0, 0, 0.18);
+
+  --sans: 'Commissioner', system-ui, 'Segoe UI', Roboto, sans-serif;
+  --heading: 'Commissioner', system-ui, 'Segoe UI', Roboto, sans-serif;
   --mono: ui-monospace, Consolas, monospace;
 
   font: 18px/145% var(--sans);
@@ -32,17 +73,39 @@
   }
 }
 
+.glass-over-map {
+  background: rgba(42, 45, 52, 0.28);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: var(--shadow-2);
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .glass-over-map {
+    background: var(--surface);
+    border-color: transparent;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    box-shadow: var(--shadow-2);
+  }
+}
+
 @media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
+  :root:not([data-theme='light']) {
+    --text: #9a9aa0;
+    --text-h: #f4f4f5;
+    --bg: #121214;
+    --border: #2c2c30;
     --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
+    --accent: #e4e4e7;
+    --accent-hover: #c7c7cc;
+    --accent-bg: rgba(228, 228, 231, 0.15);
+    --accent-focus: var(--accent-bg);
+    --accent-border: var(--accent);
+    --text-on-accent: #18181b;
     --social-bg: rgba(47, 48, 58, 0.5);
+    --surface: #1b1b1e;
     --shadow:
       rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
   }
@@ -50,6 +113,37 @@
   #social .button-icon {
     filter: invert(1) brightness(2);
   }
+
+  .ymaps3--zoom-control__in,
+  .ymaps3--zoom-control__out,
+  .ymaps3--zoom-control__dark-in,
+  .ymaps3--zoom-control__dark-out,
+  .ymaps3--geolocation-control,
+  .ymaps3--geolocation-control__dark {
+    background-color: var(--surface) !important;
+  }
+}
+
+[data-theme='dark'] {
+  --text: #9a9aa0;
+  --text-h: #f4f4f5;
+  --bg: #121214;
+  --border: #2c2c30;
+  --code-bg: #1f2028;
+  --accent: #e4e4e7;
+  --accent-hover: #c7c7cc;
+  --accent-bg: rgba(228, 228, 231, 0.15);
+  --accent-focus: var(--accent-bg);
+  --accent-border: var(--accent);
+  --text-on-accent: #18181b;
+  --social-bg: rgba(47, 48, 58, 0.5);
+  --surface: #1b1b1e;
+  --shadow:
+    rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
+}
+
+[data-theme='dark'] #social .button-icon {
+  filter: invert(1) brightness(2);
 }
 
 #root {
@@ -155,7 +249,7 @@ body {
   border: none;
   border-radius: 50%;
   cursor: pointer;
-  color: #fff;
+  color: var(--text-on-accent);
   font: inherit;
   font-size: 13px;
   font-weight: 600;
@@ -294,7 +388,7 @@ body {
   border-radius: 4px;
   cursor: pointer;
   font: inherit;
-  color: #fff;
+  color: var(--text-on-accent);
   background: var(--accent);
 }
 
@@ -339,7 +433,7 @@ body {
   cursor: pointer;
   font: inherit;
   font-size: 14px;
-  color: #fff;
+  color: var(--text-on-accent);
   background: var(--accent);
 }
 
@@ -364,7 +458,7 @@ body {
   cursor: pointer;
   font: inherit;
   font-size: 14px;
-  color: #fff;
+  color: var(--text-on-accent);
   background: var(--accent);
   box-shadow: var(--shadow);
 }
@@ -529,7 +623,7 @@ body {
   cursor: pointer;
   font: inherit;
   font-size: 14px;
-  color: #fff;
+  color: var(--text-on-accent);
   background: var(--accent);
   box-shadow: var(--shadow);
 }
@@ -695,7 +789,7 @@ code {
     font: inherit;
     font-size: 16px;
     font-weight: 600;
-    color: #fff;
+    color: var(--text-on-accent);
     background: var(--accent);
     box-shadow: var(--shadow);
     display: inline-flex;
