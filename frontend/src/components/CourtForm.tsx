@@ -135,7 +135,7 @@ function CourtForm({ coordinates, locating = false, locationFailed = false, onPi
         <div className="court-form__loc-fallback">
           <p>Не удалось определить местоположение.</p>
           {onPickOnMap != null && (
-            <button type="button" onClick={onPickOnMap}>
+            <button type="button" className="btn btn-secondary" onClick={onPickOnMap}>
               Указать на карте
             </button>
           )}
@@ -200,10 +200,10 @@ function CourtForm({ coordinates, locating = false, locationFailed = false, onPi
       {message != null && <p className="court-form__message">{message}</p>}
 
       <div className="court-form__actions">
-        <button type="submit" disabled={submitting}>
+        <button type="submit" className="btn btn-primary" disabled={submitting}>
           {submitting ? 'Добавление…' : 'Добавить площадку'}
         </button>
-        <button type="button" onClick={onCancel} disabled={submitting}>
+        <button type="button" className="btn btn-secondary" onClick={onCancel} disabled={submitting}>
           Отмена
         </button>
       </div>

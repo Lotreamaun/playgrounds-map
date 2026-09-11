@@ -172,7 +172,7 @@ function App() {
 
             {(sheet.type === 'none' || sheet.type === 'list') && (
               <div key="list" className="side-panel__pane side-panel__list">
-                <button type="button" className="side-panel__add-btn" onClick={handleAddToggle}>
+                <button type="button" className="side-panel__add-btn btn btn-primary" onClick={handleAddToggle}>
                   Добавить площадку
                 </button>
                 <CourtList courts={listCourts} onSelect={handleSelectCourt} />
@@ -201,13 +201,13 @@ function App() {
           </div>
 
           {fabVisible && (
-            <button type="button" className="fab" onClick={handleAddToggle}>
+            <button type="button" className="fab btn btn-primary" onClick={handleAddToggle}>
               + Добавить
             </button>
           )}
 
           {cancelFabVisible && (
-            <button type="button" className="fab fab--cancel" onClick={handleAddToggle}>
+            <button type="button" className="fab fab--cancel btn btn-secondary" onClick={handleAddToggle}>
               Отмена
             </button>
           )}

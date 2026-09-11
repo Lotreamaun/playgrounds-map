@@ -48,7 +48,7 @@ function CourtList({ courts, onSelect }: CourtListProps) {
       <div className="court-list__toolbar">
         <button
           type="button"
-          className="court-list__sort-toggle"
+          className="court-list__sort-toggle btn btn-primary"
           onClick={() => setSortByProximity((prev) => !prev)}
         >
           {sortByProximity ? 'По умолчанию' : 'По близости'}
