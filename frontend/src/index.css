@@ -89,6 +89,15 @@
     backdrop-filter: none;
     box-shadow: var(--shadow-2);
   }
+
+  .ymaps3--zoom-control > .ymaps3--control-button,
+  .ymaps3--control-button:has(> .ymaps3--geolocation-control) {
+    background: var(--surface);
+    border-color: transparent;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    box-shadow: var(--shadow-2);
+  }
 }
 
 @media (prefers-color-scheme: dark) {
@@ -194,13 +203,18 @@ body {
   border: 2px solid #fff;
   border-radius: 50%;
   cursor: pointer;
-  background: var(--accent);
   box-shadow: var(--shadow);
   font-size: 13px;
   line-height: 1;
   transform: translate(-50%, -50%);
   transition: transform 150ms ease-out;
 }
+
+.court-marker__pin--basketball { background: var(--sport-basketball); }
+.court-marker__pin--football { background: var(--sport-football); }
+.court-marker__pin--hockey { background: var(--sport-hockey); }
+.court-marker__pin--tennis { background: var(--sport-tennis); }
+.court-marker__pin--default { background: var(--text-secondary); }
 
 .court-marker__pin--selected {
   transform: translate(-50%, -50%) scale(1.25);
@@ -904,6 +918,21 @@ code {
   .court-list__row {
     transition: none;
   }
+}
+
+/*
+ * The ymaps3 runtime wraps each 24px icon box in a 40px
+ * button.ymaps3--control-button (8px radius) that renders the visible square
+ * chrome over the map — give that zoom/geolocation chrome a .glass-over-map
+ * surface (blur + tinted backdrop) while the accent icon masks stay on top.
+ */
+.ymaps3--zoom-control > .ymaps3--control-button,
+.ymaps3--control-button:has(> .ymaps3--geolocation-control) {
+  background: rgba(42, 45, 52, 0.28);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: var(--shadow-2);
 }
 
 /*

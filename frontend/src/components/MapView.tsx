@@ -5,6 +5,7 @@ import CourtMarker from './CourtMarker'
 import type { Coordinates } from './CourtForm'
 import { loadYandexMaps } from '../services/yandexMaps'
 import type { YandexMapsModules } from '../services/yandexMaps'
+import { useMediaQuery } from '../hooks/useMediaQuery'
 
 const TBILISI_CENTER: [number, number] = [44.8271, 41.7151] // [lon, lat]
 const DEFAULT_ZOOM = 12
@@ -58,6 +59,7 @@ interface MapViewProps {
 }
 
 function MapView({ courts, onCourtsChange, addMode, onMapClick, pick, selectedCourt, onMarkerTap }: MapViewProps) {
+  const isDark = useMediaQuery('(prefers-color-scheme: dark)')
   const [modules, setModules] = useState<YandexMapsModules | null>(null)
   const [error, setError] = useState<string | null>(() =>
     API_KEY == null || API_KEY === ''
@@ -246,7 +248,7 @@ function MapView({ courts, onCourtsChange, addMode, onMapClick, pick, selectedCo
     <div className="map-view">
       {/* location is seed-only after mount — camera changes must go through setLocation() on the ref, not by changing this prop */}
       <YMap location={reactify.useDefault(INITIAL_LOCATION)} ref={handleMapRef}>
-        <YMapDefaultSchemeLayer />
+        <YMapDefaultSchemeLayer theme={isDark ? 'dark' : 'light'} />
         <YMapDefaultFeaturesLayer />
         <YMapListener onClick={handleMapClick} onUpdate={scheduleFetch} />
         <YMapControls position="top left">

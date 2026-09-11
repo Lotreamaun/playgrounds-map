@@ -1,16 +1,15 @@
 import { useEffect, useState } from 'react'
+import { Basketball, MapPin } from '@phosphor-icons/react'
+import type { Icon } from '@phosphor-icons/react'
 import type { Court } from '../services/api'
 import { BASE_URL } from '../services/api'
 import { translateSurface, translateCondition } from '../utils/labels'
 
-const SPORT_ICONS: Record<string, string> = {
-  basketball: '🏀',
+const SPORT_ICONS: Record<string, Icon> = {
+  basketball: Basketball,
 }
-const DEFAULT_SPORT_ICON = '📍'
-
-function sportIcon(sportType: string): string {
-  return SPORT_ICONS[sportType] ?? DEFAULT_SPORT_ICON
-}
+const DEFAULT_SPORT_ICON = MapPin
+const SPORT_PIN_MODIFIERS = ['basketball', 'football', 'hockey', 'tennis']
 
 export function CourtCard({ court }: { court: Court }) {
   const address =
@@ -97,15 +96,20 @@ function CourtMarker({ court, addMode, isSelected = false, onSelect }: CourtMark
     onSelect(court)
   }
 
+  const sportModifier = SPORT_PIN_MODIFIERS.includes(court.sport_type)
+    ? ` court-marker__pin--${court.sport_type}`
+    : ' court-marker__pin--default'
+  const SportIcon = SPORT_ICONS[court.sport_type] ?? DEFAULT_SPORT_ICON
+
   return (
     <div className="court-marker">
       <button
         type="button"
-        className={`court-marker__pin${isSelected ? ' court-marker__pin--selected' : ''}`}
+        className={`court-marker__pin${isSelected ? ' court-marker__pin--selected' : ''}${sportModifier}`}
         aria-label={court.name ?? `Площадка #${court.id ?? ''}`}
         onClick={handleClick}
       >
-        {sportIcon(court.sport_type)}
+        <SportIcon weight={isSelected ? 'duotone' : 'regular'} size={18} color="#fff" />
       </button>
     </div>
   )
