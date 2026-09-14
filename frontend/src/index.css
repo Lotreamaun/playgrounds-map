@@ -919,14 +919,13 @@ code {
   }
 
   /*
-   * Push the geolocation control above the three-tier .mobile-bottom-stack
-   * (geolocation -> FAB -> search-pill). The ymaps3 group is absolutely
-   * positioned at bottom: 0; margin-bottom on the group shifts its border
-   * edge up to clear: wrapper bottom offset (16px) + pill height (48px) +
-   * gap (12px) + FAB height (56px) + gap (12px).
+   * Push the geolocation control above the search-pill, level with the FAB.
+   * The ymaps3 group is positioned bottom-right; margin-bottom shifts its
+   * border edge up to clear: wrapper bottom offset (16px) + pill height
+   * (48px) + gap (12px). The FAB and geolocation now share the same tier.
    */
   .ymaps3--controls_vertical {
-    margin-bottom: calc(env(safe-area-inset-bottom, 0px) + 16px + 48px + 12px + 56px + 12px);
+    margin-bottom: calc(env(safe-area-inset-bottom, 0px) + 16px + 48px + 12px);
   }
 }
 

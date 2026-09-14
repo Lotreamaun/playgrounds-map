@@ -282,7 +282,7 @@ function MapView({ courts, onCourtsChange, addMode, onMapClick, pick, selectedCo
         <YMapDefaultSchemeLayer theme={isDark ? 'dark' : 'light'} />
         <YMapDefaultFeaturesLayer />
         <YMapListener onClick={handleMapClick} onUpdate={scheduleFetch} />
-        <YMapControls position={isMobile ? 'bottom' : 'top left'} orientation={isMobile ? 'vertical' : undefined}>
+        <YMapControls position={isMobile ? 'bottom right' : 'top left'} orientation={isMobile ? 'vertical' : undefined}>
           {!isMobile && (
             <YMapControl>
               <div className="map-zoom-control">
