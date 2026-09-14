@@ -793,14 +793,6 @@ code {
 }
 
 @media (max-width: 767px) {
-  #root {
-    min-height: 100dvh;
-  }
-
-  .map-view {
-    height: 100dvh;
-  }
-
   .search-pill {
     position: fixed;
     left: 16px;
