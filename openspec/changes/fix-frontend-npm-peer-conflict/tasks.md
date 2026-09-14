@@ -1,6 +1,6 @@
 ## 1. Конфигурация зависимостей
 
-- [ ] 1.1 В `frontend/package.json` добавить поле `overrides`, принуждающее `openapi-typescript` использовать корневую версию `typescript`:
+- [x] 1.1 В `frontend/package.json` добавить поле `overrides`, принуждающее `openapi-typescript` использовать корневую версию `typescript`:
   ```json
   "overrides": {
     "openapi-typescript": {
@@ -8,8 +8,8 @@
     }
   }
   ```
-- [ ] 1.2 Удалить текущий `frontend/node_modules` и `frontend/package-lock.json`, выполнить чистый `npm install` в `frontend/` без флагов `--force`/`--legacy-peer-deps`.
-- [ ] 1.3 Убедиться, что `npm install` завершился без `ERESOLVE` и `npm ls typescript openapi-typescript` не показывает `invalid`.
+- [x] 1.2 Удалить текущий `frontend/node_modules` и `frontend/package-lock.json`, выполнить чистый `npm install` в `frontend/` без флагов `--force`/`--legacy-peer-deps`.
+- [x] 1.3 Убедиться, что `npm install` завершился без `ERESOLVE` и `npm ls typescript openapi-typescript` не показывает `invalid`.
 - [ ] 1.4 Закоммитить обновлённые `frontend/package.json` и `frontend/package-lock.json`.
 
 ## 2. Проверка
