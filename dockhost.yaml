@@ -8,7 +8,7 @@
 # совпадать с именем репозитория/контейнера backend ниже (иначе — 502 после редеплоя).
 #
 # Перед применением:
-#   - заменить <GIT_REPO_URL> на фактический URL этого git-репозитория;
+#   - URL репозитория уже указан (github.com/Lotreamaun/playgrounds-map); при необходимости заменить на фактический;
 #   - задать глобальную переменную ADMIN_TOKEN (сильный секрет) через панель/CLI Dockhost
 #     или заменить значение ниже — НЕ коммитить настоящий токен;
 #   - заменить CORS_ORIGINS на прод-домен.
@@ -18,7 +18,7 @@ project: courtmap
 repositories:
     # Оба билда собираются из одного репозитория, но из разных каталогов
     backend:
-        url: <GIT_REPO_URL>
+        url: https://github.com/Lotreamaun/playgrounds-map.git
         branch: main
         dockerFile: backend/Dockerfile
         dockerContext: backend
@@ -27,7 +27,7 @@ repositories:
         memory: 256MiB
 
     frontend:
-        url: <GIT_REPO_URL>
+        url: https://github.com/Lotreamaun/playgrounds-map.git
         branch: main
         dockerFile: frontend/Dockerfile
         dockerContext: frontend
