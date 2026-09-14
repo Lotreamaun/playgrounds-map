@@ -81,34 +81,6 @@
   box-shadow: var(--shadow-2);
 }
 
-@media (prefers-reduced-transparency: reduce) {
-  .glass-over-map {
-    background: var(--surface);
-    border-color: transparent;
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
-    box-shadow: var(--shadow-2);
-  }
-
-  .ymaps3--zoom-control > .ymaps3--control-button,
-  .ymaps3--control-button:has(> .ymaps3--geolocation-control) {
-    background: var(--surface);
-    border-color: transparent;
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
-    box-shadow: var(--shadow-2);
-  }
-
-  .fab,
-  .mobile-top-bar__btn {
-    background: var(--surface);
-    border-color: transparent;
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
-    box-shadow: var(--shadow-2);
-  }
-}
-
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
     --text: #9a9aa0;
@@ -799,26 +771,17 @@ code {
     height: 100dvh;
   }
 
-  .mobile-top-bar {
+  .search-pill {
     position: fixed;
-    top: calc(env(safe-area-inset-top) + 8px);
-    left: 12px;
-    right: 12px;
+    left: 16px;
+    right: calc(16px + 56px + 12px);
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 24px + 16px);
     z-index: 1850;
-    display: flex;
-    justify-content: flex-end;
-    pointer-events: none;
-  }
-
-  .mobile-top-bar__btn {
-    pointer-events: auto;
-    min-width: 44px;
-    min-height: 44px;
-    padding: 0 14px;
-    border-radius: 22px;
-    cursor: pointer;
+    height: 48px;
+    padding: 0 16px;
+    border-radius: var(--radius-pill);
     font: inherit;
-    font-size: 15px;
+    font-size: 13px;
     color: var(--text-h);
     background: rgba(42, 45, 52, 0.28);
     -webkit-backdrop-filter: blur(14px);
@@ -827,21 +790,23 @@ code {
     box-shadow: var(--shadow-2);
     display: inline-flex;
     align-items: center;
-    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    touch-action: manipulation;
+    overflow: hidden;
+    white-space: nowrap;
   }
 
   .fab {
     position: fixed;
     right: 16px;
-    bottom: calc(env(safe-area-inset-bottom) + 24px);
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 24px + 16px);
     z-index: 1850;
-    min-width: 60px;
-    min-height: 60px;
-    padding: 0 18px;
-    border-radius: 30px;
-    font-size: 16px;
-    font-weight: 600;
-    display: inline-flex;
+    width: 56px;
+    height: 56px;
+    padding: 0;
+    border-radius: 50%;
+    display: flex;
     align-items: center;
     justify-content: center;
     touch-action: manipulation;
@@ -939,6 +904,16 @@ code {
     height: 28px;
     font-size: 15px;
   }
+
+  /*
+   * Push the vertical zoom/geolocation stack above the search-pill/FAB row.
+   * The ymaps3 group is absolutely positioned at bottom: 0 with 12px internal
+   * padding; margin-bottom on the group shifts its border edge up, clearing
+   * the row whose baseline is FAB bottom-offset + FAB height.
+   */
+  .ymaps3--controls_vertical {
+    margin-bottom: calc(env(safe-area-inset-bottom, 0px) + 24px + 16px + 56px);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -971,15 +946,12 @@ code {
 /*
  * The ymaps3 runtime wraps each 24px icon box in a 40px
  * button.ymaps3--control-button (8px radius) that renders the visible square
- * chrome over the map — give that zoom/geolocation chrome a .glass-over-map
- * surface (blur + tinted backdrop) while the accent icon masks stay on top.
+ * chrome over the map — give that zoom/geolocation chrome a flat elevation-2
+ * surface (--surface + shadow) while the accent icon masks stay on top.
  */
 .ymaps3--zoom-control > .ymaps3--control-button,
 .ymaps3--control-button:has(> .ymaps3--geolocation-control) {
-  background: rgba(42, 45, 52, 0.28);
-  -webkit-backdrop-filter: blur(14px);
-  backdrop-filter: blur(14px);
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  background: var(--surface);
   box-shadow: var(--shadow-2);
 }
 
@@ -1005,20 +977,36 @@ code {
 
 .ymaps3--zoom-control__in,
 .ymaps3--zoom-control__dark-in {
-  -webkit-mask-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik0xMSA1Ljk5MmMwLS41MzcuNDQ4LS45OTIgMS0uOTkyLjU1NiAwIDEgLjQ0NCAxIC45OTJWMTFoNS4wMDhjLjUzNyAwIC45OTIuNDQ4Ljk5MiAxIDAgLjU1Ni0uNDQ0IDEtLjk5MiAxSDEzdjUuMDA4YzAgLjUzNy0uNDQ4Ljk5Mi0xIC45OTItLjU1NiAwLTEtLjQ0NC0xLS45OTJWMTNINS45OTJDNS40NTUgMTMgNSAxMi41NTIgNSAxMmMwLS41NTYuNDQ0LTEgLjk5Mi0xSDExVjUuOTkyeiIgZmlsbD0iIzRkNGQ0ZCIvPjwvc3ZnPgo=');
-  mask-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik0xMSA1Ljk5MmMwLS41MzcuNDQ4LS45OTIgMS0uOTkyLjU1NiAwIDEgLjQ0NCAxIC45OTJWMTFoNS4wMDhjLjUzNyAwIC45OTIuNDQ4Ljk5MiAxIDAgLjU1Ni0uNDQ0IDEtLjk5MiAxSDEzdjUuMDA4YzAgLjUzNy0uNDQ4Ljk5Mi0xIC45OTItLjU1NiAwLTEtLjQ0NC0xLS45OTJWMTNINS45OTJDNS40NTUgMTMgNSAxMi41NTIgNSAxMmMwLS41NTYuNDQ0LTEgLjk5Mi0xSDExVjUuOTkyeiIgZmlsbD0iIzRkNGQ0ZCIvPjwvc3ZnPgo=');
+  -webkit-mask-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgZmlsbD0iY3VycmVudENvbG9yIiB2aWV3Qm94PSIwIDAgMjU2IDI1NiI+PHBhdGggZD0iTTIyNCwxMjhhOCw4LDAsMCwxLTgsOEgxMzZ2ODBhOCw4LDAsMCwxLTE2LDBWMTM2SDQwYTgsOCwwLDAsMSwwLTE2aDgwVjQwYTgsOCwwLDAsMSwxNiwwdjgwaDgwQTgsOCwwLDAsMSwyMjQsMTI4WiI+PC9wYXRoPjwvc3ZnPg==');
+  mask-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgZmlsbD0iY3VycmVudENvbG9yIiB2aWV3Qm94PSIwIDAgMjU2IDI1NiI+PHBhdGggZD0iTTIyNCwxMjhhOCw4LDAsMCwxLTgsOEgxMzZ2ODBhOCw4LDAsMCwxLTE2LDBWMTM2SDQwYTgsOCwwLDAsMSwwLTE2aDgwVjQwYTgsOCwwLDAsMSwxNiwwdjgwaDgwQTgsOCwwLDAsMSwyMjQsMTI4WiI+PC9wYXRoPjwvc3ZnPg==');
 }
 
 .ymaps3--zoom-control__out,
 .ymaps3--zoom-control__dark-out {
-  -webkit-mask-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik01IDEyYTEgMSAwIDAgMSAxLTFoMTJhMSAxIDAgMSAxIDAgMkg2YTEgMSAwIDAgMS0xLTF6IiBmaWxsPSIjNGQ0ZDRkIi8+PC9zdmc+Cg==');
-  mask-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik01IDEyYTEgMSAwIDAgMSAxLTFoMTJhMSAxIDAgMSAxIDAgMkg2YTEgMSAwIDAgMS0xLTF6IiBmaWxsPSIjNGQ0ZDRkIi8+PC9zdmc+Cg==');
+  -webkit-mask-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgZmlsbD0iY3VycmVudENvbG9yIiB2aWV3Qm94PSIwIDAgMjU2IDI1NiI+PHBhdGggZD0iTTIyNCwxMjhhOCw4LDAsMCwxLTgsOEg0MGE4LDgsMCwwLDEsMC0xNkgyMTZBOCw4LDAsMCwxLDIyNCwxMjhaIj48L3BhdGg+PC9zdmc+');
+  mask-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgZmlsbD0iY3VycmVudENvbG9yIiB2aWV3Qm94PSIwIDAgMjU2IDI1NiI+PHBhdGggZD0iTTIyNCwxMjhhOCw4LDAsMCwxLTgsOEg0MGE4LDgsMCwwLDEsMC0xNkgyMTZBOCw4LDAsMCwxLDIyNCwxMjhaIj48L3BhdGg+PC9zdmc+');
 }
 
 .ymaps3--geolocation-control,
 .ymaps3--geolocation-control__dark {
-  -webkit-mask-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTQiIGhlaWdodD0iMTQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTEuMzE1IDYuNzNjLS40ODIuMjI3LS4zOS45NC4xMzQgMS4wMzdsNC4wNi43MjQuNzIzIDQuMDZjLjA5OC41MjUuODEuNjE3IDEuMDM3LjEzNWw0LjY3NS05LjlhLjU1LjU1IDAgMCAwLS43MzItLjczbC05LjkgNC42NzRoLjAwMnoiIGZpbGw9IiM0ZDRkNGQiLz48L3N2Zz4K');
-  mask-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTQiIGhlaWdodD0iMTQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTEuMzE1IDYuNzNjLS40ODIuMjI3LS4zOS45NC4xMzQgMS4wMzdsNC4wNi43MjQuNzIzIDQuMDZjLjA5OC41MjUuODEuNjE3IDEuMDM3LjEzNWw0LjY3NS05LjlhLjU1LjU1IDAgMCAwLS43MzItLjczbC05LjkgNC42NzRoLjAwMnoiIGZpbGw9IiM0ZDRkNGQiLz48L3N2Zz4K');
+  -webkit-mask-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgZmlsbD0iY3VycmVudENvbG9yIiB2aWV3Qm94PSIwIDAgMjU2IDI1NiI+PHBhdGggZD0iTTIzMiwxMjBoLTguMzRBOTYuMTQsOTYuMTQsMCwwLDAsMTM2LDMyLjM0VjI0YTgsOCwwLDAsMC0xNiwwdjguMzRBOTYuMTQsOTYuMTQsMCwwLDAsMzIuMzQsMTIwSDI0YTgsOCwwLDAsMCwwLDE2aDguMzRBOTYuMTQsOTYuMTQsMCwwLDAsMTIwLDIyMy42NlYyMzJhOCw4LDAsMCwwLDE2LDB2LTguMzRBOTYuMTQsOTYuMTQsMCwwLDAsMjIzLjY2LDEzNkgyMzJhOCw4LDAsMCwwLDAtMTZabS05Niw4Ny42VjIwMGE4LDgsMCwwLDAtMTYsMHY3LjZBODAuMTUsODAuMTUsMCwwLDEsNDguNCwxMzZINTZhOCw4LDAsMCwwLDAtMTZINDguNEE4MC4xNSw4MC4xNSwwLDAsMSwxMjAsNDguNFY1NmE4LDgsMCwwLDAsMTYsMFY0OC40QTgwLjE1LDgwLjE1LDAsMCwxLDIwNy42LDEyMEgyMDBhOCw4LDAsMCwwLDAsMTZoNy42QTgwLjE1LDgwLjE1LDAsMCwxLDEzNiwyMDcuNlpNMTI4LDg4YTQwLDQwLDAsMSwwLDQwLDQwQTQwLDQwLDAsMCwwLDEyOCw4OFptMCw2NGEyNCwyNCwwLDEsMSwyNC0yNEEyNCwyNCwwLDAsMSwxMjgsMTUyWiI+PC9wYXRoPjwvc3ZnPg==');
+  mask-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgZmlsbD0iY3VycmVudENvbG9yIiB2aWV3Qm94PSIwIDAgMjU2IDI1NiI+PHBhdGggZD0iTTIzMiwxMjBoLTguMzRBOTYuMTQsOTYuMTQsMCwwLDAsMTM2LDMyLjM0VjI0YTgsOCwwLDAsMC0xNiwwdjguMzRBOTYuMTQsOTYuMTQsMCwwLDAsMzIuMzQsMTIwSDI0YTgsOCwwLDAsMCwwLDE2aDguMzRBOTYuMTQsOTYuMTQsMCwwLDAsMTIwLDIyMy42NlYyMzJhOCw4LDAsMCwwLDE2LDB2LTguMzRBOTYuMTQsOTYuMTQsMCwwLDAsMjIzLjY2LDEzNkgyMzJhOCw4LDAsMCwwLDAtMTZabS05Niw4Ny42VjIwMGE4LDgsMCwwLDAtMTYsMHY3LjZBODAuMTUsODAuMTUsMCwwLDEsNDguNCwxMzZINTZhOCw4LDAsMCwwLDAtMTZINDguNEE4MC4xNSw4MC4xNSwwLDAsMSwxMjAsNDguNFY1NmE4LDgsMCwwLDAsMTYsMFY0OC40QTgwLjE1LDgwLjE1LDAsMCwxLDIwNy42LDEyMEgyMDBhOCw4LDAsMCwwLDAsMTZoNy42QTgwLjE1LDgwLjE1LDAsMCwxLDEzNiwyMDcuNlpNMTI4LDg4YTQwLDQwLDAsMSwwLDQwLDQwQTQwLDQwLDAsMCwwLDEyOCw4OFptMCw2NGEyNCwyNCwwLDEsMSwyNC0yNEEyNCwyNCwwLDAsMSwxMjgsMTUyWiI+PC9wYXRoPjwvc3ZnPg==');
   -webkit-mask-size: 24px 24px;
   mask-size: 24px 24px;
+}
+
+/*
+ * Emitted last so it outranks the glass declarations on .fab/.search-pill/
+ * .glass-over-map declared elsewhere (equal specificity, later in source).
+ */
+@media (prefers-reduced-transparency: reduce) {
+  .glass-over-map,
+  .fab,
+  .search-pill {
+    background: var(--surface);
+    border-color: transparent;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    box-shadow: var(--shadow-2);
+  }
 }

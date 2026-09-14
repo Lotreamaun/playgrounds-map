@@ -9,6 +9,7 @@ import type { Coordinates } from './components/CourtForm'
 import { getCourts } from './services/api'
 import type { Court } from './services/api'
 import { useMediaQuery } from './hooks/useMediaQuery'
+import { MagnifyingGlass, Plus } from '@phosphor-icons/react'
 
 type SheetState =
   | { type: 'none' }
@@ -189,20 +190,25 @@ function App() {
           onMapClick={handleMapClick}
           selectedCourt={selectedCourt}
           onMarkerTap={handleSelectCourt}
+          isMobile={isMobile}
         />
       </div>
 
       {isMobile && (
         <>
-          <div className="mobile-top-bar">
-            <button type="button" className="mobile-top-bar__btn" onClick={handleOpenList}>
-              Список
-            </button>
-          </div>
+          <button type="button" className="search-pill" onClick={handleOpenList}>
+            <MagnifyingGlass size={20} />
+            Искать площадки
+          </button>
 
           {fabVisible && (
-            <button type="button" className="fab btn btn-primary" onClick={handleAddToggle}>
-              + Добавить
+            <button
+              type="button"
+              className="fab btn btn-primary"
+              onClick={handleAddToggle}
+              aria-label="Добавить площадку"
+            >
+              <Plus weight="bold" size={24} />
             </button>
           )}
 

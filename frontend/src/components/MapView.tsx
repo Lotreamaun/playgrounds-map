@@ -56,9 +56,10 @@ interface MapViewProps {
   pick?: Coordinates | null
   selectedCourt?: Court | null
   onMarkerTap: (court: Court) => void
+  isMobile: boolean
 }
 
-function MapView({ courts, onCourtsChange, addMode, onMapClick, pick, selectedCourt, onMarkerTap }: MapViewProps) {
+function MapView({ courts, onCourtsChange, addMode, onMapClick, pick, selectedCourt, onMarkerTap, isMobile }: MapViewProps) {
   const isDark = useMediaQuery('(prefers-color-scheme: dark)')
   const [modules, setModules] = useState<YandexMapsModules | null>(null)
   const [error, setError] = useState<string | null>(() =>
@@ -251,7 +252,7 @@ function MapView({ courts, onCourtsChange, addMode, onMapClick, pick, selectedCo
         <YMapDefaultSchemeLayer theme={isDark ? 'dark' : 'light'} />
         <YMapDefaultFeaturesLayer />
         <YMapListener onClick={handleMapClick} onUpdate={scheduleFetch} />
-        <YMapControls position="top left">
+        <YMapControls position={isMobile ? 'bottom right' : 'top left'} orientation={isMobile ? 'vertical' : undefined}>
           <YMapZoomControl />
           <YMapGeolocationControl onGeolocatePosition={handleGeolocateFallback} />
         </YMapControls>
