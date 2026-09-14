@@ -31,8 +31,7 @@ export interface YandexMapsModules {
   YMapLayer: ComponentType<any>
   YMapClusterer: ComponentType<any>
   clusterByGrid: (options: { gridSize: number }) => unknown
-  YMapZoomControl: ComponentType<any>
-  YMapGeolocationControl: ComponentType<any>
+  YMapControl: ComponentType<any>
   reactify: { useDefault: <T>(value: T) => T }
 }
 
@@ -46,16 +45,12 @@ export function loadYandexMaps(apiKey: string): Promise<YandexMapsModules> {
     .then(async ([ymaps3React]) => {
       const reactify = (ymaps3React as any).reactify.bindTo(React, ReactDOM)
       const base = reactify.module(ymaps3 as any)
-      // @yandex/ymaps3-clusterer and @yandex/ymaps3-default-ui-theme are standalone npm
-      // packages, not "self" modules ymaps3.import knows how to resolve without an explicit
-      // CDN registration — since they're installed locally, load them as plain ESM imports
-      // instead (per their own READMEs: "Usage with npm").
-      const [clustererRaw, themeRaw] = await Promise.all([
-        import('@yandex/ymaps3-clusterer'),
-        import('@yandex/ymaps3-default-ui-theme'),
-      ])
+      // @yandex/ymaps3-clusterer is a standalone npm package, not a "self" module
+      // ymaps3.import knows how to resolve without an explicit CDN registration —
+      // since it's installed locally, load it as a plain ESM import instead (per
+      // its own README: "Usage with npm").
+      const clustererRaw = await import('@yandex/ymaps3-clusterer')
       const clusterer = reactify.module(clustererRaw as any)
-      const theme = reactify.module(themeRaw as any)
 
       return {
         YMap: base.YMap,
@@ -68,8 +63,7 @@ export function loadYandexMaps(apiKey: string): Promise<YandexMapsModules> {
         YMapLayer: base.YMapLayer,
         YMapClusterer: clusterer.YMapClusterer,
         clusterByGrid: clusterer.clusterByGrid,
-        YMapZoomControl: theme.YMapZoomControl,
-        YMapGeolocationControl: theme.YMapGeolocationControl,
+        YMapControl: base.YMapControl,
         reactify,
       } satisfies YandexMapsModules
     })

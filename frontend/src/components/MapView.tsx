@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Minus, NavigationArrow, Plus } from '@phosphor-icons/react'
 import { getCourts } from '../services/api'
 import type { Court } from '../services/api'
 import CourtMarker from './CourtMarker'
@@ -75,6 +76,7 @@ function MapView({ courts, onCourtsChange, addMode, onMapClick, pick, selectedCo
   } | null>(null)
   const debounceRef = useRef<number | null>(null)
   const addModeRef = useRef(addMode)
+  const [isLocating, setIsLocating] = useState(false)
 
   useEffect(() => {
     addModeRef.current = addMode
@@ -165,10 +167,39 @@ function MapView({ courts, onCourtsChange, addMode, onMapClick, pick, selectedCo
     [onMapClick],
   )
 
-  const handleGeolocateFallback = useCallback((position: unknown) => {
-    if (position == null) {
-      mapInstanceRef.current?.setLocation({ center: TBILISI_CENTER, zoom: DEFAULT_ZOOM })
+  const handleZoomIn = useCallback(() => {
+    const map = mapInstanceRef.current
+    if (map == null) return
+    map.setLocation({ zoom: Math.min(map.zoom + 1, map.zoomRange.max) })
+  }, [])
+
+  const handleZoomOut = useCallback(() => {
+    const map = mapInstanceRef.current
+    if (map == null) return
+    map.setLocation({ zoom: Math.max(map.zoom - 1, map.zoomRange.min) })
+  }, [])
+
+  const handleGeolocate = useCallback(() => {
+    const map = mapInstanceRef.current
+    if (map == null) return
+    if (!navigator.geolocation) {
+      map.setLocation({ center: TBILISI_CENTER })
+      return
     }
+    setIsLocating(true)
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setIsLocating(false)
+        // Center-only, same reasoning as the selectedCourt effect above — a
+        // manual "locate me" tap shouldn't fight the user's chosen zoom.
+        map.setLocation({ center: [position.coords.longitude, position.coords.latitude] })
+      },
+      () => {
+        setIsLocating(false)
+        map.setLocation({ center: TBILISI_CENTER })
+      },
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 30000 },
+    )
   }, [])
 
   const handleClusterClick = useCallback((coordinates: [number, number], clustered: CourtFeature[]) => {
@@ -210,8 +241,7 @@ function MapView({ courts, onCourtsChange, addMode, onMapClick, pick, selectedCo
     YMapLayer,
     YMapClusterer,
     clusterByGrid,
-    YMapZoomControl,
-    YMapGeolocationControl,
+    YMapControl,
     reactify,
   } = modules
 
@@ -253,8 +283,30 @@ function MapView({ courts, onCourtsChange, addMode, onMapClick, pick, selectedCo
         <YMapDefaultFeaturesLayer />
         <YMapListener onClick={handleMapClick} onUpdate={scheduleFetch} />
         <YMapControls position={isMobile ? 'bottom right' : 'top left'} orientation={isMobile ? 'vertical' : undefined}>
-          <YMapZoomControl />
-          <YMapGeolocationControl onGeolocatePosition={handleGeolocateFallback} />
+          {!isMobile && (
+            <YMapControl>
+              <div className="map-zoom-control">
+                <button type="button" className="map-control-btn" aria-label="Приблизить" onClick={handleZoomIn}>
+                  <Plus weight="regular" size={18} />
+                </button>
+                <div className="map-zoom-control__divider" />
+                <button type="button" className="map-control-btn" aria-label="Отдалить" onClick={handleZoomOut}>
+                  <Minus weight="regular" size={18} />
+                </button>
+              </div>
+            </YMapControl>
+          )}
+          <YMapControl>
+            <button
+              type="button"
+              className="map-control-btn map-geolocation-btn"
+              aria-label="Определить моё местоположение"
+              disabled={isLocating}
+              onClick={handleGeolocate}
+            >
+              <NavigationArrow weight="regular" size={18} />
+            </button>
+          </YMapControl>
         </YMapControls>
         <YMapFeatureDataSource id="courts" />
         <YMapLayer source="courts" type="markers" zIndex={1800} />

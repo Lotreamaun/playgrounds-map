@@ -1,4 +1,3 @@
-@import '@yandex/ymaps3-default-ui-theme/dist/esm/index.css';
 @import url('https://fonts.googleapis.com/css2?family=Commissioner:wght@400;500;600;700;800&display=swap');
 
 :root {
@@ -102,15 +101,6 @@
 
   #social .button-icon {
     filter: invert(1) brightness(2);
-  }
-
-  .ymaps3--zoom-control__in,
-  .ymaps3--zoom-control__out,
-  .ymaps3--zoom-control__dark-in,
-  .ymaps3--zoom-control__dark-out,
-  .ymaps3--geolocation-control,
-  .ymaps3--geolocation-control__dark {
-    background-color: var(--surface) !important;
   }
 }
 
@@ -966,55 +956,53 @@ code {
 }
 
 /*
- * The ymaps3 runtime wraps each 24px icon box in a 40px
- * button.ymaps3--control-button (8px radius) that renders the visible square
- * chrome over the map — give that zoom/geolocation chrome a flat elevation-2
- * surface (--surface + shadow) while the accent icon masks stay on top.
+ * Custom zoom/geolocation controls, mounted via the base ymaps3 `YMapControl`
+ * primitive (replaces the removed `@yandex/ymaps3-default-ui-theme` package's
+ * `YMapZoomControl`/`YMapGeolocationControl`). Plain elements in our own
+ * render tree, so they take the app's opaque surface tokens directly — no
+ * mask-image/`!important` workarounds needed.
  */
-.ymaps3--zoom-control > .ymaps3--control-button,
-.ymaps3--control-button:has(> .ymaps3--geolocation-control) {
+.map-zoom-control {
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--radius-md);
+  overflow: hidden;
   background: var(--surface);
   box-shadow: var(--shadow-2);
 }
 
-/*
- * @yandex/ymaps3-default-ui-theme only exposes CSS custom properties for popup
- * tail geometry, not control colors — zoom/geolocation icons ship as data-URI
- * backgrounds with a hardcoded fill. Recolor them to --accent via mask-image
- * (same shape, alpha-only) instead of a custom-property override.
- */
-.ymaps3--zoom-control__in,
-.ymaps3--zoom-control__out,
-.ymaps3--zoom-control__dark-in,
-.ymaps3--zoom-control__dark-out,
-.ymaps3--geolocation-control,
-.ymaps3--geolocation-control__dark {
-  background-image: none !important;
-  background-color: var(--accent) !important;
-  -webkit-mask-repeat: no-repeat;
-  mask-repeat: no-repeat;
-  -webkit-mask-position: center;
-  mask-position: center;
+.map-zoom-control__divider {
+  height: 1px;
+  background: var(--border);
 }
 
-.ymaps3--zoom-control__in,
-.ymaps3--zoom-control__dark-in {
-  -webkit-mask-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgZmlsbD0iY3VycmVudENvbG9yIiB2aWV3Qm94PSIwIDAgMjU2IDI1NiI+PHBhdGggZD0iTTIyNCwxMjhhOCw4LDAsMCwxLTgsOEgxMzZ2ODBhOCw4LDAsMCwxLTE2LDBWMTM2SDQwYTgsOCwwLDAsMSwwLTE2aDgwVjQwYTgsOCwwLDAsMSwxNiwwdjgwaDgwQTgsOCwwLDAsMSwyMjQsMTI4WiI+PC9wYXRoPjwvc3ZnPg==');
-  mask-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgZmlsbD0iY3VycmVudENvbG9yIiB2aWV3Qm94PSIwIDAgMjU2IDI1NiI+PHBhdGggZD0iTTIyNCwxMjhhOCw4LDAsMCwxLTgsOEgxMzZ2ODBhOCw4LDAsMCwxLTE2LDBWMTM2SDQwYTgsOCwwLDAsMSwwLTE2aDgwVjQwYTgsOCwwLDAsMSwxNiwwdjgwaDgwQTgsOCwwLDAsMSwyMjQsMTI4WiI+PC9wYXRoPjwvc3ZnPg==');
+.map-control-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--accent);
+  cursor: pointer;
 }
 
-.ymaps3--zoom-control__out,
-.ymaps3--zoom-control__dark-out {
-  -webkit-mask-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgZmlsbD0iY3VycmVudENvbG9yIiB2aWV3Qm94PSIwIDAgMjU2IDI1NiI+PHBhdGggZD0iTTIyNCwxMjhhOCw4LDAsMCwxLTgsOEg0MGE4LDgsMCwwLDEsMC0xNkgyMTZBOCw4LDAsMCwxLDIyNCwxMjhaIj48L3BhdGg+PC9zdmc+');
-  mask-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgZmlsbD0iY3VycmVudENvbG9yIiB2aWV3Qm94PSIwIDAgMjU2IDI1NiI+PHBhdGggZD0iTTIyNCwxMjhhOCw4LDAsMCwxLTgsOEg0MGE4LDgsMCwwLDEsMC0xNkgyMTZBOCw4LDAsMCwxLDIyNCwxMjhaIj48L3BhdGg+PC9zdmc+');
+.map-control-btn:hover {
+  background: var(--accent-bg);
 }
 
-.ymaps3--geolocation-control,
-.ymaps3--geolocation-control__dark {
-  -webkit-mask-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgZmlsbD0iY3VycmVudENvbG9yIiB2aWV3Qm94PSIwIDAgMjU2IDI1NiI+PHBhdGggZD0iTTIzMiwxMjBoLTguMzRBOTYuMTQsOTYuMTQsMCwwLDAsMTM2LDMyLjM0VjI0YTgsOCwwLDAsMC0xNiwwdjguMzRBOTYuMTQsOTYuMTQsMCwwLDAsMzIuMzQsMTIwSDI0YTgsOCwwLDAsMCwwLDE2aDguMzRBOTYuMTQsOTYuMTQsMCwwLDAsMTIwLDIyMy42NlYyMzJhOCw4LDAsMCwwLDE2LDB2LTguMzRBOTYuMTQsOTYuMTQsMCwwLDAsMjIzLjY2LDEzNkgyMzJhOCw4LDAsMCwwLDAtMTZabS05Niw4Ny42VjIwMGE4LDgsMCwwLDAtMTYsMHY3LjZBODAuMTUsODAuMTUsMCwwLDEsNDguNCwxMzZINTZhOCw4LDAsMCwwLDAtMTZINDguNEE4MC4xNSw4MC4xNSwwLDAsMSwxMjAsNDguNFY1NmE4LDgsMCwwLDAsMTYsMFY0OC40QTgwLjE1LDgwLjE1LDAsMCwxLDIwNy42LDEyMEgyMDBhOCw4LDAsMCwwLDAsMTZoNy42QTgwLjE1LDgwLjE1LDAsMCwxLDEzNiwyMDcuNlpNMTI4LDg4YTQwLDQwLDAsMSwwLDQwLDQwQTQwLDQwLDAsMCwwLDEyOCw4OFptMCw2NGEyNCwyNCwwLDEsMSwyNC0yNEEyNCwyNCwwLDAsMSwxMjgsMTUyWiI+PC9wYXRoPjwvc3ZnPg==');
-  mask-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgZmlsbD0iY3VycmVudENvbG9yIiB2aWV3Qm94PSIwIDAgMjU2IDI1NiI+PHBhdGggZD0iTTIzMiwxMjBoLTguMzRBOTYuMTQsOTYuMTQsMCwwLDAsMTM2LDMyLjM0VjI0YTgsOCwwLDAsMC0xNiwwdjguMzRBOTYuMTQsOTYuMTQsMCwwLDAsMzIuMzQsMTIwSDI0YTgsOCwwLDAsMCwwLDE2aDguMzRBOTYuMTQsOTYuMTQsMCwwLDAsMTIwLDIyMy42NlYyMzJhOCw4LDAsMCwwLDE2LDB2LTguMzRBOTYuMTQsOTYuMTQsMCwwLDAsMjIzLjY2LDEzNkgyMzJhOCw4LDAsMCwwLDAtMTZabS05Niw4Ny42VjIwMGE4LDgsMCwwLDAtMTYsMHY3LjZBODAuMTUsODAuMTUsMCwwLDEsNDguNCwxMzZINTZhOCw4LDAsMCwwLDAtMTZINDguNEE4MC4xNSw4MC4xNSwwLDAsMSwxMjAsNDguNFY1NmE4LDgsMCwwLDAsMTYsMFY0OC40QTgwLjE1LDgwLjE1LDAsMCwxLDIwNy42LDEyMEgyMDBhOCw4LDAsMCwwLDAsMTZoNy42QTgwLjE1LDgwLjE1LDAsMCwxLDEzNiwyMDcuNlpNMTI4LDg4YTQwLDQwLDAsMSwwLDQwLDQwQTQwLDQwLDAsMCwwLDEyOCw4OFptMCw2NGEyNCwyNCwwLDEsMSwyNC0yNEEyNCwyNCwwLDAsMSwxMjgsMTUyWiI+PC9wYXRoPjwvc3ZnPg==');
-  -webkit-mask-size: 24px 24px;
-  mask-size: 24px 24px;
+.map-control-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.map-geolocation-btn {
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--surface);
+  box-shadow: var(--shadow-2);
 }
 
 /*
