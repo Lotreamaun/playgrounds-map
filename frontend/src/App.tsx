@@ -196,27 +196,29 @@ function App() {
 
       {isMobile && (
         <>
-          <button type="button" className="search-pill" onClick={handleOpenList}>
-            <MagnifyingGlass size={20} />
-            Искать площадки
-          </button>
-
-          {fabVisible && (
-            <button
-              type="button"
-              className="fab btn btn-primary"
-              onClick={handleAddToggle}
-              aria-label="Добавить площадку"
-            >
-              <Plus weight="bold" size={24} />
+          <div className="mobile-bottom-stack">
+            <button type="button" className="search-pill" onClick={handleOpenList}>
+              <MagnifyingGlass size={20} />
+              Искать площадки
             </button>
-          )}
 
-          {cancelFabVisible && (
-            <button type="button" className="fab fab--cancel btn btn-secondary" onClick={handleAddToggle}>
-              Отмена
-            </button>
-          )}
+            {fabVisible && (
+              <button
+                type="button"
+                className="fab btn btn-primary"
+                onClick={handleAddToggle}
+                aria-label="Добавить площадку"
+              >
+                <Plus weight="bold" size={24} />
+              </button>
+            )}
+
+            {cancelFabVisible && (
+              <button type="button" className="fab fab--cancel btn btn-secondary" onClick={handleAddToggle}>
+                Отмена
+              </button>
+            )}
+          </div>
 
           {cancelFabVisible && (
             <div className="mobile-add-hint">Нажмите на карту, чтобы выбрать точку</div>

@@ -783,23 +783,29 @@ code {
 }
 
 @media (max-width: 767px) {
-  .search-pill {
+  .mobile-bottom-stack {
     position: fixed;
     left: 16px;
-    right: calc(16px + 56px + 12px);
-    bottom: calc(env(safe-area-inset-bottom, 0px) + 24px + 16px);
+    right: 16px;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
     z-index: 1850;
+    display: flex;
+    flex-direction: column-reverse;
+    align-items: center;
+    gap: var(--space-3);
+  }
+
+  .search-pill {
+    align-self: stretch;
     height: 48px;
     padding: 0 16px;
     border-radius: var(--radius-pill);
     font: inherit;
     font-size: 13px;
     color: var(--text-h);
-    background: rgba(42, 45, 52, 0.28);
-    -webkit-backdrop-filter: blur(14px);
-    backdrop-filter: blur(14px);
-    border: 1px solid rgba(255, 255, 255, 0.5);
-    box-shadow: var(--shadow-2);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-1);
     display: inline-flex;
     align-items: center;
     gap: 8px;
@@ -810,10 +816,6 @@ code {
   }
 
   .fab {
-    position: fixed;
-    right: 16px;
-    bottom: calc(env(safe-area-inset-bottom, 0px) + 24px + 16px);
-    z-index: 1850;
     width: 56px;
     height: 56px;
     padding: 0;
@@ -822,10 +824,7 @@ code {
     align-items: center;
     justify-content: center;
     touch-action: manipulation;
-    background: rgba(42, 45, 52, 0.28);
-    -webkit-backdrop-filter: blur(14px);
-    backdrop-filter: blur(14px);
-    border: 1px solid rgba(255, 255, 255, 0.5);
+    background: var(--surface);
     box-shadow: var(--shadow-2);
   }
 
@@ -836,7 +835,9 @@ code {
   .mobile-add-hint {
     position: fixed;
     left: 50%;
-    bottom: calc(env(safe-area-inset-bottom) + 100px);
+    /* Clears the taller .mobile-bottom-stack: wrapper bottom offset (16px) +
+     * pill height (48px) + gap (12px) + FAB height (56px) + gap (12px). */
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 16px + 48px + 12px + 56px + 12px);
     transform: translateX(-50%);
     z-index: 1850;
     padding: 10px 16px;
@@ -918,13 +919,14 @@ code {
   }
 
   /*
-   * Push the vertical zoom/geolocation stack above the search-pill/FAB row.
-   * The ymaps3 group is absolutely positioned at bottom: 0 with 12px internal
-   * padding; margin-bottom on the group shifts its border edge up, clearing
-   * the row whose baseline is FAB bottom-offset + FAB height.
+   * Push the geolocation control above the three-tier .mobile-bottom-stack
+   * (geolocation -> FAB -> search-pill). The ymaps3 group is absolutely
+   * positioned at bottom: 0; margin-bottom on the group shifts its border
+   * edge up to clear: wrapper bottom offset (16px) + pill height (48px) +
+   * gap (12px) + FAB height (56px) + gap (12px).
    */
   .ymaps3--controls_vertical {
-    margin-bottom: calc(env(safe-area-inset-bottom, 0px) + 24px + 16px + 56px);
+    margin-bottom: calc(env(safe-area-inset-bottom, 0px) + 16px + 48px + 12px + 56px + 12px);
   }
 }
 
@@ -1006,13 +1008,12 @@ code {
 }
 
 /*
- * Emitted last so it outranks the glass declarations on .fab/.search-pill/
- * .glass-over-map declared elsewhere (equal specificity, later in source).
+ * Emitted last so it outranks the glass declaration on .glass-over-map
+ * declared elsewhere (equal specificity, later in source). .fab/.search-pill
+ * are opaque unconditionally now, so they no longer need this override.
  */
 @media (prefers-reduced-transparency: reduce) {
-  .glass-over-map,
-  .fab,
-  .search-pill {
+  .glass-over-map {
     background: var(--surface);
     border-color: transparent;
     -webkit-backdrop-filter: none;
