@@ -3,7 +3,7 @@ import { Basketball, MapPin } from '@phosphor-icons/react'
 import type { Icon } from '@phosphor-icons/react'
 import type { Court } from '../services/api'
 import { BASE_URL } from '../services/api'
-import { translateSurface, translateCondition } from '../utils/labels'
+import { translateSurface, translateCondition, translateSport } from '../utils/labels'
 
 const SPORT_ICONS: Record<string, Icon> = {
   basketball: Basketball,
@@ -45,14 +45,21 @@ export function CourtCard({ court }: { court: Court }) {
         </button>
       )}
       <div className="court-card__body">
+        <div className="court-card__sport-chip">
+          <span className="court-card__sport-dot" style={{ background: `var(--sport-${court.sport_type})` }} />
+          {(() => { const Icon = SPORT_ICONS[court.sport_type] ?? DEFAULT_SPORT_ICON; return <Icon size={14} /> })()}
+          <span>{translateSport(court.sport_type)}</span>
+        </div>
         <h3>{court.name ?? `Площадка #${court.id ?? ''}`}</h3>
-        <p className="court-card__address">{address}</p>
-        <p className="court-card__surface">
-          <strong>Покрытие:</strong> {translateSurface(court.surface)}
-        </p>
-        <p className="court-card__condition">
-          <strong>Состояние:</strong> {translateCondition(court.condition)}
-        </p>
+        <p className="court-card__meta">{address} · {translateSurface(court.surface)} · {translateCondition(court.condition)}</p>
+        <a
+          className="btn btn-secondary court-card__route"
+          href={`https://yandex.ru/maps/?rtext=~${court.latitude},${court.longitude}`}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Построить маршрут
+        </a>
       </div>
       {photo != null && photoOpen && (
         <div
