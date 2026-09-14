@@ -1,5 +1,9 @@
 # React + TypeScript + Vite
 
+## Dependency installation
+
+The only supported way to install dependencies is a plain `npm install` (no `--force` / `--legacy-peer-deps` flags). The `overrides` in `package.json` force `openapi-typescript` to use the root `typescript` version, so a plain install resolves its dev-only peer conflict — do not "fix" it ad hoc with flags, see change [`fix-frontend-npm-peer-conflict`](../openspec/changes/fix-frontend-npm-peer-conflict) for details.
+
 This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
 
 Currently, two official plugins are available:
