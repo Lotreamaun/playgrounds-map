@@ -1,0 +1,32 @@
+# Локальное зеркало прод-топологии Dockhost (см. openspec/changes/deploy-mvp-dockhost/design.md).
+# Не используется платформой Dockhost — только для локального прогона перед деплоем.
+#
+# ВАЖНО: имя сервиса `backend` зашито в proxy_pass фронтенд-nginx
+# (frontend/nginx/default.conf) — оно должно совпадать с именем контейнера
+# здесь и в dockhost.yaml (иначе после редеплоя — молчаливые 502).
+
+services:
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    environment:
+      ADMIN_TOKEN: ${ADMIN_TOKEN:-change-me}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173,http://localhost}
+    volumes:
+      - courtmap-data:/app/data
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-}
+        VITE_YANDEX_MAPS_KEY: ${VITE_YANDEX_MAPS_KEY:-a777c097-a5ec-4c58-b9a9-e23f94bfd245}
+        VITE_YANDEX_GEOCODER_KEY: ${VITE_YANDEX_GEOCODER_KEY:-a6a9006b-a9a8-48b9-ae46-009f99c6cb84}
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  courtmap-data:

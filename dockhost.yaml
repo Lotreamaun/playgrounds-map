@@ -1,0 +1,96 @@
+# Манифест проекта Dockhost для CourtMap (см. openspec/changes/deploy-mvp-dockhost/design.md).
+#
+# Топология: два контейнера в одном проекте, общаются по имени сервиса,
+# один сетевой диск для данных backend, домен + маршрут "/" → frontend:80.
+#
+# ВАЖНО: имя контейнера/repository `backend` зашито в proxy_pass фронтенд-nginx
+# (frontend/nginx/default.conf: `proxy_pass http://backend:8000`) — оно должно
+# совпадать с именем репозитория/контейнера backend ниже (иначе — 502 после редеплоя).
+#
+# Перед применением:
+#   - заменить <GIT_REPO_URL> на фактический URL этого git-репозитория;
+#   - задать глобальную переменную ADMIN_TOKEN (сильный секрет) через панель/CLI Dockhost
+#     или заменить значение ниже — НЕ коммитить настоящий токен;
+#   - заменить CORS_ORIGINS на прод-домен.
+version: 1
+project: courtmap
+
+repositories:
+    # Оба билда собираются из одного репозитория, но из разных каталогов
+    backend:
+        url: <GIT_REPO_URL>
+        branch: main
+        dockerFile: backend/Dockerfile
+        dockerContext: backend
+        cpu: 1
+        cpuFraction: 20
+        memory: 256MiB
+
+    frontend:
+        url: <GIT_REPO_URL>
+        branch: main
+        dockerFile: frontend/Dockerfile
+        dockerContext: frontend
+        # build-аргументы ключей Яндекса переопределяют дефолты в Dockerfile;
+        # VITE_API_BASE_URL остаётся "" (same-origin)
+        # dockerArgs:
+        #   - name: VITE_YANDEX_MAPS_KEY
+        #     value: <yandex maps key>
+        #   - name: VITE_YANDEX_GEOCODER_KEY
+        #     value: <yandex geocoder key>
+        cpu: 1
+        cpuFraction: 20
+        memory: 128MiB
+
+environment:
+    variables:
+        # Сильный токен задать через панель/CLI (значение ниже — только локальный дефолт)
+        ADMIN_TOKEN: change-me
+        CORS_ORIGINS: https://app.example.com,http://localhost:5173
+
+volumes:
+    data:
+        type: ssd
+        size: 1Gib
+
+containers:
+    backend:
+        image: backend
+        replicas: 1                                       # SQLite — single-writer, >1 реплики сломает БД
+        resources:
+            memory: 256MiB
+            cpu: 1
+            cpuFraction: 20
+        variables:
+            ADMIN_TOKEN: $ADMIN_TOKEN
+            CORS_ORIGINS: $CORS_ORIGINS
+        volumes:
+            - name: data
+              mountPath: /app/data
+
+    frontend:
+        image: frontend
+        replicas: 1
+        resources:
+            memory: 128MiB
+            cpu: 1
+            cpuFraction: 20
+        ports:
+            - 80
+
+network:
+    domains:
+        www: ~                                            # динамический домен (или host: для внешнего)
+
+    services:
+        frontend:
+            container: frontend
+            ports:
+                - 80
+
+    routes:
+        www:
+            domain: www
+            path: /
+            service: frontend
+            port: 80

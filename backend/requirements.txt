@@ -1,6 +1,6 @@
-fastapi
-uvicorn[standard]
-sqlmodel
-python-multipart
-python-dotenv
-slowapi
+fastapi==0.141.1
+uvicorn[standard]==0.52.4
+sqlmodel==0.0.42
+python-multipart==0.0.32
+python-dotenv==1.2.3
+slowapi==0.1.10

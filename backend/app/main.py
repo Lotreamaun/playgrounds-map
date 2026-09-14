@@ -1,5 +1,6 @@
 import logging
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -27,6 +28,11 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="CourtMap API", lifespan=lifespan)
+
+data_dir = Path("data")
+photos_dir = data_dir / "photos"
+photos_dir.mkdir(parents=True, exist_ok=True)
+logger.info("Runtime dirs ready: %s, %s", data_dir, photos_dir)
 
 app.add_middleware(
     CORSMiddleware,

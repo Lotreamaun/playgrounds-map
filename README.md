@@ -12,6 +12,42 @@
 - **Backend**: Python 3.12+, FastAPI, SQLModel, SQLite
 - **Деплой**: Docker + Docker Compose, Dockhost
 
+## Запуск в Docker (локальная проверка прод-топологии)
+
+`docker-compose.yml` зеркалит итоговую топологию Dockhost: nginx-фронтенд (порт 80) проксирует API/фото/health на backend (порт 8000) по имени сервиса; данные backend ((SQLite + фото) лежат в named volume `/app/data`.
+
+```bash
+# конфиг (один раз): ADMIN_TOKEN и CORS_ORIGINS для локального прогона
+cp .env.example .env
+
+docker compose up -d --build
+```
+
+Проверка:
+
+- **Приложение**: <http://localhost/> (значение `VITE_API_BASE_URL=""` — same-origin)
+- **Health**: <http://localhost/health> → `{"status":"ok"}`
+- **Swagger**: <http://localhost/docs>
+
+Сборка фронтенда использует build-args `VITE_API_BASE_URL` (по умолчанию `""`), `VITE_YANDEX_MAPS_KEY`, `VITE_YANDEX_GEOCODER_KEY`; дефолты берутся из закоммиченного `frontend/.env.production` (публичные ключи Яндекса), при необходимости переопределяются переменными в корневом `.env`.
+
+Остановка: `docker compose down` (данные остаются в volume). Полный сброс данных: `docker compose down -v`.
+
+## Деплой на Dockhost
+
+Манифест проекта — корневой `dockhost.yaml` (два билда из этого репозитория: `backend/` и `frontend/`, два контейнера в одном проекте, сетевой диск для `/app/data`, домен и маршрут `/` → `frontend:80`).
+
+Порядок:
+
+1. **Репозиторий**: закоммитить изменения, в `dockhost.yaml` заменить `<GIT_REPO_URL>` на URL этого репозитория.
+2. **Проект**: в панели Dockhost применить `dockhost.yaml` (или создать проект/билды/контейнеры вручную по нему). Каждый push в ветку `main` пересобирает образы (Push-to-Deploy).
+3. **Переменные окружения**: задать сильный `ADMIN_TOKEN`, `CORS_ORIGINS` = прод-домен + `http://localhost:5173` (для локальной разработки). При поддержке build-args указать `VITE_YANDEX_MAPS_KEY` / `VITE_YANDEX_GEOCODER_KEY` (иначе используются дефолты из `frontend/.env.production`).
+4. **Сетевой диск** для backend: mount `/app/data` (SQLite + фото). Реплик backend держать **ровно 1** — SQLite не поддерживает concurrent-writer.
+5. **Домен и маршрут**: `/` → `frontend:80`. Нginx внутри фронтенда сам проксирует `/courts`, `/photos/`, `/health`, `/docs`, `/openapi.json` на backend по имени контейнера — имя `backend` должно совпадать с именем контейнера в `dockhost.yaml`.
+6. **Ключи Яндекс.Карт и Геокодера**: добавить прод-домен в allowed referers в консоли Яндекса (иначе карта не загрузится даже при валидных ключах — ограничение по HTTP Referer).
+
+Проверка после деплоя: открыть приложение по публичному адресу, добавить площадку с фото и без, проверить дубликат (409), `GET /health` → 200.
+
 ## Запуск локально (dev)
 
 Два процесса: **backend** (FastAPI + SQLite, порт `8000`) и **frontend** (Vite dev-сервер, порт `5173`). Фронтенд ходит в API по адресу из `VITE_API_BASE_URL`.
