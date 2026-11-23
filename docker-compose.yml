@@ -22,6 +22,7 @@ services:
         VITE_API_BASE_URL: ${VITE_API_BASE_URL:-}
         VITE_YANDEX_MAPS_KEY: ${VITE_YANDEX_MAPS_KEY:-a777c097-a5ec-4c58-b9a9-e23f94bfd245}
         VITE_YANDEX_GEOCODER_KEY: ${VITE_YANDEX_GEOCODER_KEY:-a6a9006b-a9a8-48b9-ae46-009f99c6cb84}
+        VITE_REPORT_URL: ${VITE_REPORT_URL:-}
     restart: unless-stopped
     ports:
       - "80:80"

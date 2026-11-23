@@ -26,12 +26,10 @@ export interface YandexMapsModules {
   YMapDefaultFeaturesLayer: ComponentType<any>
   YMapMarker: ComponentType<any>
   YMapListener: ComponentType<any>
-  YMapControls: ComponentType<any>
   YMapFeatureDataSource: ComponentType<any>
   YMapLayer: ComponentType<any>
   YMapClusterer: ComponentType<any>
   clusterByGrid: (options: { gridSize: number }) => unknown
-  YMapControl: ComponentType<any>
   reactify: { useDefault: <T>(value: T) => T }
 }
 
@@ -58,12 +56,10 @@ export function loadYandexMaps(apiKey: string): Promise<YandexMapsModules> {
         YMapDefaultFeaturesLayer: base.YMapDefaultFeaturesLayer,
         YMapMarker: base.YMapMarker,
         YMapListener: base.YMapListener,
-        YMapControls: base.YMapControls,
         YMapFeatureDataSource: base.YMapFeatureDataSource,
         YMapLayer: base.YMapLayer,
         YMapClusterer: clusterer.YMapClusterer,
         clusterByGrid: clusterer.clusterByGrid,
-        YMapControl: base.YMapControl,
         reactify,
       } satisfies YandexMapsModules
     })

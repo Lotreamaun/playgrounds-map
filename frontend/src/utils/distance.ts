@@ -30,3 +30,13 @@ export function sortByDistance<T extends { latitude: number; longitude: number }
       distanceHaversine(latitude, longitude, b.latitude, b.longitude),
   )
 }
+
+/** "850 м" under 1 km (rounded to 10 m), "2,4 км" under 10 km, "12 км" above. */
+export function formatDistance(km: number): string {
+  if (km < 1) {
+    const meters = Math.round((km * 1000) / 10) * 10
+    if (meters < 1000) return `${meters} м`
+  }
+  if (km < 10) return `${km.toFixed(1).replace('.', ',')} км`
+  return `${Math.round(km)} км`
+}

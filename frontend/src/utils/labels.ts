@@ -32,3 +32,10 @@ export function translateCondition(value: string): string {
 export function translateSport(value: string): string {
   return SPORT_LABELS[value] ?? value
 }
+
+export const NO_ADDRESS = 'Адрес не указан'
+
+export function translateLighting(value: boolean | null | undefined): string {
+  if (value == null) return 'Нет данных'
+  return value ? 'Есть' : 'Нет'
+}

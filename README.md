@@ -29,7 +29,7 @@ docker compose up -d --build
 - **Health**: <http://localhost/health> → `{"status":"ok"}`
 - **Swagger**: <http://localhost/docs>
 
-Сборка фронтенда использует build-args `VITE_API_BASE_URL` (по умолчанию `""`), `VITE_YANDEX_MAPS_KEY`, `VITE_YANDEX_GEOCODER_KEY`; дефолты берутся из закоммиченного `frontend/.env.production` (публичные ключи Яндекса), при необходимости переопределяются переменными в корневом `.env`.
+Сборка фронтенда использует build-args `VITE_API_BASE_URL` (по умолчанию `""`), `VITE_YANDEX_MAPS_KEY`, `VITE_YANDEX_GEOCODER_KEY`, `VITE_REPORT_URL` (необязательный адрес канала для ссылки «Сообщить о проблеме» в карточке площадки; `{id}` заменяется на id площадки, пусто — ссылка скрыта, например `https://t.me/your_bot?start=court_{id}`); дефолты берутся из закоммиченного `frontend/.env.production` (публичные ключи Яндекса), при необходимости переопределяются переменными в корневом `.env`.
 
 Остановка: `docker compose down` (данные остаются в volume). Полный сброс данных: `docker compose down -v`.
 
@@ -98,6 +98,7 @@ cp .env.example .env
 # и VITE_YANDEX_MAPS_KEY=<ваш ключ JS API Яндекс.Карт>
 # (получить: https://developer.tech.yandex.ru/ — бесплатный тариф с лимитом запросов;
 # без ключа вместо карты будет показано сообщение)
+# необязательно: VITE_REPORT_URL=<адрес канала «Сообщить о проблеме», {id} → id площадки>
 
 # запуск dev-сервера
 npm run dev
