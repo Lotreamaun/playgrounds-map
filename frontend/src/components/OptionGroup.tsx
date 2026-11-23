@@ -12,10 +12,12 @@ interface OptionGroupProps {
   options: Option[]
   value: string
   onChange: (value: string) => void
+  /** `segmented`: equal-width connected segments (filters); default: separate pills (form). */
+  variant?: 'pills' | 'segmented'
 }
 
 /** Single-choice radiogroup of tappable buttons (roving tabindex, arrow-key navigation). */
-function OptionGroup({ id, label, options, value, onChange }: OptionGroupProps) {
+function OptionGroup({ id, label, options, value, onChange, variant = 'pills' }: OptionGroupProps) {
   const refs = useRef<Array<HTMLButtonElement | null>>([])
   const labelId = `${id}-label`
   const selectedIndex = options.findIndex((o) => o.value === value)
@@ -54,7 +56,7 @@ function OptionGroup({ id, label, options, value, onChange }: OptionGroupProps) 
       <span id={labelId} className="form-label">
         {label}
       </span>
-      <div className="option-group" role="radiogroup" aria-labelledby={labelId}>
+      <div className={`option-group${variant === 'segmented' ? ' option-group--segmented' : ''}`} role="radiogroup" aria-labelledby={labelId}>
         {options.map((option, index) => {
           const checked = option.value === value
           return (

@@ -79,16 +79,16 @@
 ### Requirement: Semantic color roles for court facts
 
 Дизайн-токены SHALL задавать цветовые роли для визуальных фактов площадки, отдельно для светлой и тёмной темы:
-- `--condition-excellent`, `--condition-good`, `--condition-fair`, `--condition-poor`;
-- `--material-asphalt`, `--material-rubber`, `--material-grass`, `--material-sand`, `--material-wood`, `--material-other`;
+- `--condition-excellent`, `--condition-good`, `--condition-fair`, `--condition-poor` — цвет уровня состояния (текст плашки и маркер);
+- `--material-asphalt`, `--material-rubber`, `--material-wood`, `--material-grass`, `--material-other` — заливка схемы площадки;
 - `--lighting-on`;
 - `--text-input` (16 px) — размер шрифта полей ввода.
 
-Маркеры этих цветов SHALL иметь контраст не меньше 3:1 с фоном чипа (`--surface-2`) в обеих темах. Компоненты SHALL использовать роли, а не литералы цветов.
+Текст цветом `--condition-*` на фоне того же цвета с низкой непрозрачностью SHALL иметь контраст не меньше 4.5:1 в обеих темах. Компоненты SHALL использовать роли, а не литералы цветов.
 
 #### Scenario: Condition colors in both themes
 - **WHEN** приложение отображается в светлой или тёмной теме
-- **THEN** точки состояния различимы на фоне чипа с контрастом не меньше 3:1
+- **THEN** слово на плашке состояния читается с контрастом не меньше 4.5:1
 
 #### Scenario: Components use roles
 - **WHEN** разработчик ищет цвета фактов в CSS компонентов

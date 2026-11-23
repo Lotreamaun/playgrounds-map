@@ -3,16 +3,17 @@ import { ArrowLeft } from '@phosphor-icons/react'
 import FullScreenLayer from './FullScreenLayer'
 import SearchField from './SearchField'
 import CourtList from './CourtList'
-import type { ComponentProps } from 'react'
+import type { ComponentProps, ReactNode } from 'react'
 
 interface SearchScreenProps {
   query: string
   onQueryChange: (value: string) => void
   onBack: () => void
   list: ComponentProps<typeof CourtList>
+  filterButton: ReactNode
 }
 
-function SearchScreen({ query, onQueryChange, onBack, list }: SearchScreenProps) {
+function SearchScreen({ query, onQueryChange, onBack, list, filterButton }: SearchScreenProps) {
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -26,6 +27,7 @@ function SearchScreen({ query, onQueryChange, onBack, list }: SearchScreenProps)
           <ArrowLeft size={22} aria-hidden="true" />
         </button>
         <SearchField value={query} onChange={onQueryChange} inputRef={inputRef} />
+        {filterButton}
       </header>
       <div className="search-screen__content">
         <CourtList {...list} />

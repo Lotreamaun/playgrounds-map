@@ -301,26 +301,49 @@ function MapScene({
 }
 
 function MapView(props: MapViewProps) {
+  const hasKey = API_KEY != null && API_KEY !== ''
   const [modules, setModules] = useState<YandexMapsModules | null>(null)
-  const [error, setError] = useState<string | null>(() =>
-    API_KEY == null || API_KEY === ''
-      ? 'Укажите VITE_YANDEX_MAPS_KEY, чтобы отобразить карту Яндекс.Карт.'
-      : null,
-  )
+  const [failed, setFailed] = useState(false)
+  const [attempt, setAttempt] = useState(0)
 
   useEffect(() => {
-    if (API_KEY == null || API_KEY === '') return
-    loadYandexMaps(API_KEY)
-      .then(setModules)
+    if (!hasKey) return
+    let cancelled = false
+    loadYandexMaps(API_KEY as string)
+      .then((loaded) => {
+        if (!cancelled) setModules(loaded)
+      })
       .catch((err) => {
         console.error('Failed to load Yandex Maps API:', err)
-        const detail = err instanceof Error ? err.message : String(err)
-        setError(`Не удалось загрузить Яндекс.Карты: ${detail}`)
+        if (!cancelled) setFailed(true)
       })
+    return () => {
+      cancelled = true
+    }
+  }, [hasKey, attempt])
+
+  const handleRetry = useCallback(() => {
+    setFailed(false)
+    setAttempt((n) => n + 1)
   }, [])
 
-  if (error != null) {
-    return <div className="map-view map-view--message">{error}</div>
+  if (!hasKey) {
+    return (
+      <div className="map-view map-view--message">
+        Укажите VITE_YANDEX_MAPS_KEY, чтобы отобразить карту Яндекс.Карт.
+      </div>
+    )
+  }
+  if (failed) {
+    return (
+      <div className="map-view map-view--message map-view--error" role="alert">
+        <p className="map-view__title">Карта не загрузилась</p>
+        <p className="map-view__hint">Проверьте интернет и попробуйте ещё раз</p>
+        <button type="button" className="btn btn-secondary map-view__retry" onClick={handleRetry}>
+          Повторить
+        </button>
+      </div>
+    )
   }
   if (modules == null) {
     return <div className="map-view map-view--message">Загрузка карты…</div>

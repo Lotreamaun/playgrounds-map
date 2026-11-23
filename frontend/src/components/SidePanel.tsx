@@ -6,10 +6,13 @@ interface SidePanelProps {
   query: string
   onQueryChange: (value: string) => void
   onAdd: () => void
+  filterButton: ReactNode
+  /** Expanded filter panel, shown between the header and the content. */
+  filterPanel: ReactNode
   children: ReactNode
 }
 
-function SidePanel({ query, onQueryChange, onAdd, children }: SidePanelProps) {
+function SidePanel({ query, onQueryChange, onAdd, filterButton, filterPanel, children }: SidePanelProps) {
   return (
     <aside className="side-panel" aria-label="Площадки">
       <header className="side-panel__header">
@@ -20,8 +23,12 @@ function SidePanel({ query, onQueryChange, onAdd, children }: SidePanelProps) {
             Добавить
           </button>
         </div>
-        <SearchField value={query} onChange={onQueryChange} />
+        <div className="side-panel__search">
+          <SearchField value={query} onChange={onQueryChange} />
+          {filterButton}
+        </div>
       </header>
+      {filterPanel}
       <div className="side-panel__content">{children}</div>
     </aside>
   )

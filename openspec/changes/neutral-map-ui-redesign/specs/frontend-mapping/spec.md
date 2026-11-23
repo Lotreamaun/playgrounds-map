@@ -69,9 +69,9 @@ The frontend SHALL render the map with the Yandex Maps JavaScript API (ymaps3) o
 - **WHEN** открыта карточка площадки без освещения, и пользователь включает «Со светом»
 - **THEN** маркер этой площадки остаётся на карте выделенным, пока карточка открыта
 
-#### Scenario: Filter row on the mobile map
+#### Scenario: Filter button on the mobile map
 - **WHEN** пользователь на мобильном смотрит на карту
-- **THEN** под полем поиска виден ряд фильтров-чипов; включение чипа сразу меняет маркеры на карте
+- **THEN** справа от поля поиска видна кнопка «Фильтры»; изменения в шторке фильтров сразу меняют маркеры на карте
 
 
 ### Requirement: Map controls use the app's surface and icon styling
@@ -91,7 +91,7 @@ The frontend SHALL render the map with the Yandex Maps JavaScript API (ymaps3) o
 
 ### Requirement: Map is a full-screen canvas under floating UI on mobile
 На мобильном карта SHALL оставаться полноэкранной постоянной подложкой. Вторичный UI накладывается поверх карты, не заменяя её отдельной страницей:
-- поле поиска вверху экрана и ряд фильтров-чипов под ним (скрыт в режиме выбора точки);
+- поле поиска вверху экрана и кнопка «Фильтры» справа от него (скрыты в режиме выбора точки);
 - стек контролов у правого края;
 - шторка карточки;
 - полноэкранные экраны поиска и формы.

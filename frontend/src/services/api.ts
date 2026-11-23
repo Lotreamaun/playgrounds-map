@@ -43,6 +43,7 @@ export interface CreateCourtParams {
   surface: string
   condition: string
   has_lighting: boolean
+  is_covered?: boolean
   description?: string
   address?: string
   photo?: File
@@ -56,6 +57,7 @@ export async function createCourt(params: CreateCourtParams): Promise<Court> {
   formData.set('surface', params.surface)
   formData.set('condition', params.condition)
   formData.set('has_lighting', String(params.has_lighting))
+  if (params.is_covered != null) formData.set('is_covered', String(params.is_covered))
   if (params.name != null) formData.set('name', params.name)
   if (params.description != null) formData.set('description', params.description)
   if (params.address != null) formData.set('address', params.address)

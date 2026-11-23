@@ -135,31 +135,89 @@
 
 ### 11A. Исправления (файлы: `src/components/MapView.tsx`, `src/services/yandexMaps.ts`; в `src/index.css` — токен `--text-input` сразу после `--sans`, секции `.map-view*`, `.search-field*`, `.side-panel__header`, `.search-screen__header`, плавающее поле поиска мобильной карты и правила полей `.court-form`)
 
-- [ ] 11.1 Ошибка загрузки карты по design §15: состояние «Карта не загрузилась» с подсказкой и кнопкой «Повторить»; `loadScript` удаляет свой `<script>` при ошибке; повтор перезапускает `loadYandexMaps`; сообщение о пустом ключе не меняется
-- [ ] 11.2 Токен `--text-input: 16px`; применить ко всем `input`, `textarea`, `select` (поиск, поля формы); viewport не трогать (design §16)
-- [ ] 11.3 Убрать `flex: 1` у базового `.search-field`, задать растягивание в строковых контекстах (design §17); проверить высоту 44/50 px в шапке панели desktop, на экране поиска и на мобильной карте
-- [ ] 11.4 Проверка: `npm run build`, `npm run lint`; на 390×844 фокус в поле поиска и полях формы не меняет `visualViewport.scale`; при заблокированном `api-maps.yandex.ru` показывается состояние ошибки, а после снятия блокировки «Повторить» загружает карту
+- [x] 11.1 Ошибка загрузки карты по design §15: состояние «Карта не загрузилась» с подсказкой и кнопкой «Повторить»; `loadScript` удаляет свой `<script>` при ошибке; повтор перезапускает `loadYandexMaps`; сообщение о пустом ключе не меняется
+- [x] 11.2 Токен `--text-input: 16px`; применить ко всем `input`, `textarea`, `select` (поиск, поля формы); viewport не трогать (design §16)
+- [x] 11.3 Убрать `flex: 1` у базового `.search-field`, задать растягивание в строковых контекстах (design §17); проверить высоту 44/50 px в шапке панели desktop, на экране поиска и на мобильной карте
+- [x] 11.4 Проверка: `npm run build`, `npm run lint`; на 390×844 фокус в поле поиска и полях формы не меняет `visualViewport.scale`; при заблокированном `api-maps.yandex.ru` показывается состояние ошибки, а после снятия блокировки «Повторить» загружает карту
 
 ### 11B. Визуальные факты и фото (файлы: новые `src/components/CourtPhoto.tsx`, `src/components/CourtFacts.tsx`, `src/components/SportBadge.tsx`, `src/utils/image.ts`; изменяются `src/components/CourtCard.tsx`, `src/components/CourtList.tsx`, `src/components/CourtForm.tsx`, `src/utils/labels.ts`; в `src/index.css` — цветовые роли сразу после `--sport-*` в светлой и тёмной теме, секции `.court-card*`, `.court-list__row*`, новые `.court-photo*`, `.fact-chip*`, `.sport-badge*`)
 
-- [ ] 11.5 Токены `--condition-*`, `--material-*`, `--lighting-on` для обеих тем по design §19 и спеке «Semantic color roles for court facts» (контраст маркера с `--surface-2` ≥ 3:1)
-- [ ] 11.6 `CourtPhoto` по design §18: варианты `thumb`/`sheet`/`banner`, заглушка с иконкой спорта, проявление по `onLoad`, фолбэк по `onError`, `prefers-reduced-motion`
-- [ ] 11.7 `SportBadge` (круг `--sport-<type>` с белой иконкой, как у маркера) и `CourtFacts` (`compact`/`regular`, порядок «Покрытие · Состояние · Свет», `aria-label` с категорией, чип света скрыт при `null`)
-- [ ] 11.8 `CourtCard`: фото и заглушка через `CourtPhoto` (лайтбокс только для настоящего фото), `SportBadge` в чипе спорта вместо точки, `CourtFacts regular` вместо `<dl>`
-- [ ] 11.9 `CourtList`: строка — миниатюра `CourtPhoto thumb` слева, `SportBadge` 20 px перед названием, адрес, `CourtFacts compact`, расстояние справа; высота строки стабильна при любой длине данных
-- [ ] 11.10 `utils/image.ts` `compressPhoto(file)`: длинная сторона ≤ 1600 px, JPEG с качеством 0,8 через `createImageBitmap` + `canvas`, фолбэк на исходный файл; вызвать в `CourtForm` перед `createCourt`
-- [ ] 11.11 Проверка: `npm run build`, `npm run lint`; визуально список и карточка (с фото и без) на 390×844 и 1280×800 в обеих темах
+- [x] 11.5 Токены `--condition-*`, `--material-*`, `--lighting-on` для обеих тем по design §19 и спеке «Semantic color roles for court facts» (контраст маркера с `--surface-2` ≥ 3:1)
+- [x] 11.6 `CourtPhoto` по design §18: варианты `thumb`/`sheet`/`banner`, заглушка с иконкой спорта, проявление по `onLoad`, фолбэк по `onError`, `prefers-reduced-motion`
+- [x] 11.7 `SportBadge` (круг `--sport-<type>` с белой иконкой, как у маркера) и `CourtFacts` (`compact`/`regular`, порядок «Покрытие · Состояние · Свет», `aria-label` с категорией, чип света скрыт при `null`)
+- [x] 11.8 `CourtCard`: фото и заглушка через `CourtPhoto` (лайтбокс только для настоящего фото), `SportBadge` в чипе спорта вместо точки, `CourtFacts regular` вместо `<dl>`
+- [x] 11.9 `CourtList`: строка — миниатюра `CourtPhoto thumb` слева, `SportBadge` 20 px перед названием, адрес, `CourtFacts compact`, расстояние справа; длинные название и адрес обрезаются многоточием, а чипы фактов переносятся, но не обрезаются: каждый факт должен быть виден целиком
+- [x] 11.10 `utils/image.ts` `compressPhoto(file)`: длинная сторона ≤ 1600 px, JPEG с качеством 0,8 через `createImageBitmap` + `canvas`, фолбэк на исходный файл; вызвать в `CourtForm` перед `createCourt`
+- [x] 11.11 Проверка: `npm run build`, `npm run lint`; визуально список и карточка (с фото и без) на 390×844 и 1280×800 в обеих темах
 
 ### 11C. Фильтры (после слияния 11A и 11B; файлы: новые `src/utils/filters.ts`, `src/components/FilterBar.tsx`; изменяются `src/App.tsx`, `src/components/SidePanel.tsx`, `src/components/SearchScreen.tsx`, `src/components/CourtList.tsx` (только пустое состояние); в `src/index.css` — новая секция `.filter-bar*` и раскладка мобильной карты под полем поиска)
 
-- [ ] 11.12 `utils/filters.ts`: тип `CourtFilters`, `applyFilters`, `hasActiveFilters`, `availableSurfaces`, `EMPTY_FILTERS` (design §20)
-- [ ] 11.13 `FilterBar`: чипы-переключатели с `aria-pressed` и галочкой, чип «Покрытие» с поповером чекбоксов (только покрытия из данных; закрытие по клику вне, Escape и повторному нажатию), подпись «Резина +1», чип «Сбросить», горизонтальная прокрутка без переноса, анимации за `--dur-fast`
-- [ ] 11.14 `App`: состояние `filters`; конвейер `applyFilters` → карта и список; выбранная площадка всегда передаётся в карту; ряд на мобильной карте под полем поиска, скрыт в режиме выбора точки
-- [ ] 11.15 `SidePanel` и `SearchScreen`: `FilterBar` под полем поиска с общим состоянием
-- [ ] 11.16 `CourtList`: при пустом результате и активных фильтрах кнопка «Сбросить фильтры» (запрос сохраняется)
-- [ ] 11.17 Проверка: `npm run build`, `npm run lint`, JS ≤ 95 КБ gzip; сценарии спек «Courts can be filtered…» и «Filters apply to map markers» на 390×844 и 1280×800 в обеих темах; изменение фильтров не даёт запросов `GET /courts`
+- [x] 11.12 `utils/filters.ts`: тип `CourtFilters`, `applyFilters`, `hasActiveFilters`, `availableSurfaces`, `EMPTY_FILTERS` (design §20)
+- [x] 11.13 `FilterBar`: чипы-переключатели с `aria-pressed` и галочкой, чип «Покрытие» с поповером чекбоксов (только покрытия из данных; закрытие по клику вне, Escape и повторному нажатию), подпись «Резина +1», чип «Сбросить», горизонтальная прокрутка без переноса на мобильном и перенос в панели desktop, анимации за `--dur-fast`
+- [x] 11.14 `App`: состояние `filters`; конвейер `applyFilters` → карта и список; выбранная площадка всегда передаётся в карту; ряд на мобильной карте под полем поиска, скрыт в режиме выбора точки
+- [x] 11.15 `SidePanel` и `SearchScreen`: `FilterBar` под полем поиска с общим состоянием
+- [x] 11.16 `CourtList`: при пустом результате и активных фильтрах кнопка «Сбросить фильтры» (запрос сохраняется)
+- [x] 11.17 Проверка: `npm run build`, `npm run lint`, JS ≤ 95 КБ gzip; сценарии спек «Courts can be filtered…» и «Filters apply to map markers» на 390×844 и 1280×800 в обеих темах; изменение фильтров не даёт запросов `GET /courts`
 
 ### 11D. Приёмка
 
-- [ ] 11.18 Ревью диффов 11A–11C (Opus), повторный прогон всех сценариев раздела 10.2 и новых сценариев
+- [x] 11.18 Ревью диффов 11A–11C (Opus), повторный прогон всех сценариев раздела 10.2 и новых сценариев
 - [ ] 11.19 Проверка на iPhone по локальной сети после того, как владелец ключа добавит адрес в ограничения HTTP Referer в кабинете Яндекса (закрывает и 10.6)
+
+## 12. Переработка визуала после ревью
+
+Пакеты идут последовательно в общей рабочей копии: 12A → 12B → 12C. 12B и 12C зависят от типа `is_covered` из 12A и пересекаются в `index.css`. Решения — design §21, сценарии — спеки `frontend-court-list`, `frontend-court-ui`, `frontend-design-tokens`, `frontend-mapping`, `frontend-side-panel`, `courts`.
+
+### 12A. Признак «Крытая» в backend и API (Sonnet high: изменение схемы БД; файлы: `backend/app/models/court.py`, `backend/app/core/database.py`, `backend/app/routers/courts.py`, `backend/app/services/court_service.py` при необходимости, `frontend/src/types/court.ts` (только перегенерация), `frontend/src/services/api.ts`)
+
+- [x] 12.1 `is_covered: Optional[bool] = None` в `CourtBase`; миграция `_migrate_courts_is_covered` по образцу `address` (`ALTER TABLE courts ADD COLUMN is_covered BOOLEAN`), вызов в `init_db`
+- [x] 12.2 `POST /courts`: необязательный `is_covered: Optional[bool] = Form(default=None)`, сохранение; проверка дублей и валидация не меняются
+- [x] 12.3 Перегенерировать `src/types/court.ts` через `npm run types:court` при запущенном backend; `CreateCourtParams.is_covered?: boolean` и отправка в `createCourt`
+- [x] 12.4 Проверка: старт на копии базы без колонки (колонка добавлена, данные целы); `POST` с `is_covered=true` и без поля; `GET /courts` возвращает поле; `npm run build` и `npm run lint`
+
+### 12B. Визуал строки, карточки и формы (файлы: новые `src/components/CourtSchematic.tsx`, `LightIcon.tsx`, `ConditionBadge.tsx`; изменяются `CourtList.tsx` (строка и скелетон), `CourtCard.tsx`, `CourtPhoto.tsx`, `CourtForm.tsx`, `utils/labels.ts`; удаляются `CourtFacts.tsx` и `SportBadge.tsx`, если больше не используются; в `index.css` — токены фактов, секции `.court-list__row*`, `.court-card*`, `.court-photo*`, `.court-form*`, новые `.condition-*`, `.court-schematic*`, удаление `.fact-chip*` и `.sport-badge*`)
+
+- [x] 12.5 `labels.ts`:
+  - `wood` → «Паркет», `fair` → «Среднее»;
+  - словарь расшифровок уровней `CONDITION_HINTS` (спека «Court condition is the primary visual signal»);
+  - `FORM_SURFACES = ['asphalt', 'rubber', 'wood', 'grass']`.
+- [x] 12.6 Токены:
+  - `--condition-*` — проверить контраст текста цветом уровня на фоне того же цвета с низкой непрозрачностью, не ниже 4.5:1, в обеих темах; при необходимости затемнить в светлой теме;
+  - `--material-*` — оставить только для заливки схемы: `asphalt`, `rubber`, `wood`, `grass`, `other`;
+  - удалить неиспользуемые.
+- [x] 12.7 `LightIcon` (`on`/`off`, `size`) по design §21; `ConditionBadge` (вариант `list` — плашка 92 px «слово / состояние»; вариант `banner` — полоса карточки с расшифровкой)
+- [x] 12.8 `CourtSchematic` (`sportType`, `surface`, `size`):
+  - словарь рисунков, сейчас баскетбол (вид сверху: граница, центральная линия и круг, трапеции, трёхочковые дуги);
+  - нейтральный фолбэк для других видов спорта;
+  - `CourtPhoto` использует его как подложку под настоящим фото (без вариантов `thumb`/`banner`).
+- [x] 12.9 Строка `CourtList` по спеке «List shows court details»: без изображений и значка спорта, «[Крытая ·] Покрытие · Свет» серым, `ConditionBadge list` справа; скелетон без квадрата миниатюры
+- [x] 12.10 `CourtCard` по спеке «Court details shown on marker click»:
+  - шапка с фото или схемой 88×88 справа;
+  - `ConditionBadge banner`;
+  - плитки «Покрытие / Площадка / Освещение»;
+  - без чипа спорта;
+  - одинаково для `panel` и `sheet`.
+- [x] 12.11 `CourtForm`:
+  - покрытия из `FORM_SURFACES`;
+  - подсказка-расшифровка под вариантами состояния для выбранного;
+  - переключатель «Крытая площадка» (`role="switch"`), автовключение при выборе «Паркет»;
+  - отправка `is_covered`.
+- [x] 12.12 Проверка: `npm run build`, `npm run lint`
+
+### 12C. Фильтры по кнопке (файлы: `src/utils/filters.ts`, новые `src/components/FilterButton.tsx`, `FilterPanel.tsx`; удаляется `FilterBar.tsx`; изменяются `App.tsx`, `SidePanel.tsx`, `SearchScreen.tsx`; в `index.css` — замена секции `.filter-bar*` на `.filter-button*`, `.filter-panel*`, `.filter-sheet*`, раскладка `.mobile-search`)
+
+- [x] 12.13 `CourtFilters` = `{ condition: 'any'|'good'|'excellent', lit, covered, surfaces }`, `applyFilters`, `activeFilterCount`, `EMPTY_FILTERS`
+- [x] 12.14 `FilterButton`:
+  - иконка `SlidersHorizontal`;
+  - значок с числом включённых фильтров;
+  - `aria-expanded`;
+  - `aria-label` «Фильтры» или «Фильтры, включено: N».
+- [x] 12.15 `FilterPanel` с группами «Состояние» (сегменты, `role="radiogroup"`), «Удобства» (переключатели `aria-pressed`), «Покрытие» (только доступные) и «Сбросить» в шапке. Два контейнера:
+  - мобильная нижняя шторка поверх карты с «Показать N площадок»; закрывается свайпом вниз, Escape и системной «назад»;
+  - раскрывающаяся панель под шапкой боковой панели desktop.
+- [x] 12.16 `App`, `SidePanel`, `SearchScreen`: кнопка справа от поля поиска на мобильной карте, в шапке экрана поиска и в шапке панели desktop; общее состояние; конвейер фильтров и правило «открытая карточка остаётся на карте» сохраняются
+- [x] 12.17 Проверка: `npm run build`, `npm run lint`, JS ≤ 96 КБ gzip (бюджет пересмотрен, design «Goals»)
+
+### 12D. Приёмка
+
+- [x] 12.18 Ревью диффов 12A–12C (Opus); прогон сценариев изменённых спек на 390×844 и 1280×800 в обеих темах; один `GET /courts` за сессию

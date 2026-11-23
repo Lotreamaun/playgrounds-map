@@ -15,7 +15,11 @@ function loadScript(apiKey: string): Promise<void> {
     script.id = SCRIPT_ID
     script.src = `https://api-maps.yandex.ru/v3/?apikey=${encodeURIComponent(apiKey)}&lang=ru_RU`
     script.onload = () => resolve()
-    script.onerror = () => reject(new Error('Failed to load the Yandex Maps JS API script'))
+    script.onerror = () => {
+      // Drop the failed tag, otherwise a retry would see it and resolve without loading anything.
+      script.remove()
+      reject(new Error('Failed to load the Yandex Maps JS API script'))
+    }
     document.head.appendChild(script)
   })
 }

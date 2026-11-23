@@ -1,26 +1,17 @@
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Basketball, Copy, Flag, MapPin, ShareNetwork } from '@phosphor-icons/react'
-import type { Icon } from '@phosphor-icons/react'
+import { Copy, Flag, House, ShareNetwork, Sun } from '@phosphor-icons/react'
 import type { Court } from '../services/api'
 import { BASE_URL } from '../services/api'
-import {
-  translateSurface,
-  translateCondition,
-  translateSport,
-  translateLighting,
-  NO_ADDRESS,
-} from '../utils/labels'
+import { translateSurface, NO_ADDRESS } from '../utils/labels'
 import { formatDistance } from '../utils/distance'
 import { copyText } from '../utils/clipboard'
 import { showToast } from '../hooks/useToast'
 import { useEscape } from '../hooks/useEscape'
 import RouteMenu from './RouteMenu'
-
-const SPORT_ICONS: Record<string, Icon> = {
-  basketball: Basketball,
-}
-const DEFAULT_SPORT_ICON = MapPin
+import CourtPhoto from './CourtPhoto'
+import ConditionBadge from './ConditionBadge'
+import LightIcon from './LightIcon'
 
 const REPORT_URL = (import.meta.env.VITE_REPORT_URL as string | undefined) ?? ''
 
@@ -68,7 +59,6 @@ function CourtCard({ court, layout, distanceKm = null }: CourtCardProps) {
   const title = court.name ?? `Площадка #${court.id ?? ''}`
   const hasAddress = court.address != null && court.address !== ''
   const photo = court.photo_url != null && court.photo_url !== '' ? `${BASE_URL}${court.photo_url}` : null
-  const SportIcon = SPORT_ICONS[court.sport_type] ?? DEFAULT_SPORT_ICON
   const description = court.description?.trim() ?? ''
   const dataDate = formatDataDate(court.updated_at)
   const reportHref =
@@ -95,34 +85,63 @@ function CourtCard({ court, layout, distanceKm = null }: CourtCardProps) {
     showToast(ok ? 'Ссылка скопирована' : 'Не удалось скопировать')
   }
 
-  const photoButton =
-    photo != null ? (
-      <button
-        type="button"
-        className={`court-card__photo-btn court-card__photo-btn--${layout}`}
-        onClick={() => setPhotoOpen(true)}
-        aria-label={`Открыть фото ${title}`}
-      >
-        <img className="court-card__photo" src={photo} alt="" loading="lazy" decoding="async" />
-      </button>
-    ) : null
-
   return (
     <article className={`court-card court-card--${layout}`}>
-      {layout === 'panel' && photoButton}
-
       <div className="court-card__head">
         <div className="court-card__headline">
-          <div className="court-card__sport-chip">
-            <span className="court-card__sport-dot" style={{ background: `var(--sport-${court.sport_type})` }} />
-            <SportIcon size={14} aria-hidden="true" />
-            <span>{translateSport(court.sport_type)}</span>
-          </div>
           <h1 className="court-card__title">{title}</h1>
           {distanceKm != null && <p className="court-card__distance">{formatDistance(distanceKm)}</p>}
         </div>
-        {layout === 'sheet' && photoButton}
+        <CourtPhoto
+          src={photo}
+          sportType={court.sport_type}
+          surface={court.surface}
+          onOpen={photo != null ? () => setPhotoOpen(true) : undefined}
+          label={`Открыть фото ${title}`}
+        />
       </div>
+
+      <ConditionBadge condition={court.condition} variant="banner" />
+
+      <dl className="court-card__facts">
+        <div className="court-fact">
+          <dt className="court-fact__label">Покрытие</dt>
+          <dd className="court-fact__value">{translateSurface(court.surface)}</dd>
+        </div>
+        <div className="court-fact">
+          <dt className="court-fact__label">Площадка</dt>
+          <dd className="court-fact__value">
+            {court.is_covered === true ? (
+              <>
+                <House size={18} aria-hidden="true" />
+                Крытая
+              </>
+            ) : court.is_covered === false ? (
+              <>
+                <Sun size={18} aria-hidden="true" />
+                Улица
+              </>
+            ) : (
+              <span className="court-fact__unknown">Нет данных</span>
+            )}
+          </dd>
+        </div>
+        <div className="court-fact">
+          <dt className="court-fact__label">Освещение</dt>
+          <dd
+            className={`court-fact__value${court.has_lighting ? ' court-fact__value--lit' : ''}`}
+          >
+            {court.has_lighting != null ? (
+              <>
+                <LightIcon on={court.has_lighting} size={18} />
+                {court.has_lighting ? 'Есть' : 'Нет'}
+              </>
+            ) : (
+              <span className="court-fact__unknown">Нет данных</span>
+            )}
+          </dd>
+        </div>
+      </dl>
 
       <div className="court-card__address">
         <span className={`court-card__address-text${hasAddress ? '' : ' court-card__address-text--empty'}`}>
@@ -151,21 +170,6 @@ function CourtCard({ court, layout, distanceKm = null }: CourtCardProps) {
           </button>
         )}
       </div>
-
-      <dl className="court-card__facts">
-        <div>
-          <dt>Покрытие</dt>
-          <dd>{translateSurface(court.surface)}</dd>
-        </div>
-        <div>
-          <dt>Состояние</dt>
-          <dd>{translateCondition(court.condition)}</dd>
-        </div>
-        <div>
-          <dt>Освещение</dt>
-          <dd>{translateLighting(court.has_lighting)}</dd>
-        </div>
-      </dl>
 
       {description !== '' && <p className="court-card__description">{description}</p>}
 

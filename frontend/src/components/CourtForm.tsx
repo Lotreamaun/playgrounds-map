@@ -4,7 +4,8 @@ import { ArrowLeft, Camera, MapPin } from '@phosphor-icons/react'
 import { createCourt } from '../services/api'
 import type { Court } from '../services/api'
 import { reverseGeocode } from '../services/yandexMaps'
-import { SURFACE_LABELS, CONDITION_LABELS } from '../utils/labels'
+import { SURFACE_LABELS, CONDITION_LABELS, CONDITION_HINTS, FORM_SURFACES } from '../utils/labels'
+import { compressPhoto } from '../utils/image'
 import OptionGroup from './OptionGroup'
 import type { Option } from './OptionGroup'
 
@@ -23,7 +24,7 @@ interface CourtFormProps {
   onCancel: () => void
 }
 
-const SURFACE_OPTIONS: Option[] = Object.entries(SURFACE_LABELS).map(([value, label]) => ({ value, label }))
+const SURFACE_OPTIONS: Option[] = FORM_SURFACES.map((value) => ({ value, label: SURFACE_LABELS[value] }))
 const CONDITION_OPTIONS: Option[] = Object.entries(CONDITION_LABELS).map(([value, label]) => ({ value, label }))
 const API_KEY = import.meta.env.VITE_YANDEX_GEOCODER_KEY as string | undefined
 const COMMENT_LIMIT = 500
@@ -46,6 +47,7 @@ function CourtForm({
   const uid = useId()
   const [surface, setSurface] = useState('')
   const [condition, setCondition] = useState('')
+  const [covered, setCovered] = useState(false)
   const [manualAddress, setManualAddress] = useState<{ key: string | null; value: string } | null>(null)
   const [resolved, setResolved] = useState<{ key: string; value: string | null } | null>(null)
   const [comment, setComment] = useState('')
@@ -84,6 +86,12 @@ function CourtForm({
 
   const address = manualAddress != null && manualAddress.key === key ? manualAddress.value : (geocoded ?? '')
 
+  const handleSurfaceChange = (value: string) => {
+    setSurface(value)
+    // Parquet is an indoor surface; suggest "covered", the user can still turn it off.
+    if (value === 'wood') setCovered(true)
+  }
+
   const handlePhotoChange = (event: ChangeEvent<HTMLInputElement>) => {
     setPhoto(event.target.files?.[0] ?? null)
   }
@@ -113,9 +121,10 @@ function CourtForm({
         surface,
         condition,
         has_lighting: false,
+        is_covered: covered,
         address: trimmedAddress !== '' ? trimmedAddress : undefined,
         description: description !== '' ? description : undefined,
-        photo: photo ?? undefined,
+        photo: photo != null ? await compressPhoto(photo) : undefined,
       })
       onCreated(court)
     } catch (err) {
@@ -183,8 +192,22 @@ function CourtForm({
           label="Покрытие"
           options={SURFACE_OPTIONS}
           value={surface}
-          onChange={setSurface}
+          onChange={handleSurfaceChange}
         />
+
+        <button
+          type="button"
+          role="switch"
+          aria-checked={covered}
+          className="court-form__switch"
+          onClick={() => setCovered((v) => !v)}
+        >
+          <span className="court-form__switch-text">Крытая площадка</span>
+          <span className="court-form__switch-track" aria-hidden="true">
+            <span className="court-form__switch-thumb" />
+          </span>
+        </button>
+
         <OptionGroup
           id={`${uid}-condition`}
           label="Состояние"
@@ -192,6 +215,9 @@ function CourtForm({
           value={condition}
           onChange={setCondition}
         />
+        <p className="court-form__hint" aria-live="polite">
+          {CONDITION_HINTS[condition] ?? ''}
+        </p>
 
         <div className="court-form__field">
           <span className="form-label">Фото (необязательно)</span>

@@ -9,6 +9,8 @@ import FullScreenLayer from './components/FullScreenLayer'
 import SearchScreen from './components/SearchScreen'
 import SearchField from './components/SearchField'
 import SidePanel from './components/SidePanel'
+import FilterButton from './components/FilterButton'
+import FilterPanel from './components/FilterPanel'
 import Toast from './components/Toast'
 import type { Coordinates } from './components/CourtForm'
 import type { Court } from './services/api'
@@ -20,6 +22,8 @@ import { useEscape } from './hooks/useEscape'
 import { showToast } from './hooks/useToast'
 import { distanceHaversine } from './utils/distance'
 import { filterCourts, sortCourts } from './utils/search'
+import { activeFilterCount, applyFilters, availableSurfaces, EMPTY_FILTERS } from './utils/filters'
+import type { CourtFilters } from './utils/filters'
 
 type Ui =
   | { kind: 'browse' }
@@ -40,6 +44,8 @@ function App() {
   const deferredQuery = useDeferredValue(query)
   const [pick, setPick] = useState<Coordinates | null>(null)
   const [sheetHeight, setSheetHeight] = useState(0)
+  const [filters, setFilters] = useState<CourtFilters>(EMPTY_FILTERS)
+  const [filtersOpen, setFiltersOpen] = useState(false)
 
   const pickRef = useRef(pick)
   const addSessionRef = useRef(0)
@@ -57,11 +63,29 @@ function App() {
     return map
   }, [courts, position])
 
-  const sortedCourts = useMemo(() => sortCourts(courts, position), [courts, position])
+  const filteredCourts = useMemo(() => applyFilters(courts, filters), [courts, filters])
+  const surfaces = useMemo(() => availableSurfaces(courts), [courts])
+  const filterCount = activeFilterCount(filters)
+  const filtersActive = filterCount > 0
+  const toggleFilters = useCallback(() => setFiltersOpen((open) => !open), [])
+  const closeFilters = useCallback(() => setFiltersOpen(false), [])
+  // Opening a card or the form closes the filters: on desktop the panel would otherwise sit above the card.
+  const [filtersUiKind, setFiltersUiKind] = useState(ui.kind)
+  if (filtersUiKind !== ui.kind) {
+    setFiltersUiKind(ui.kind)
+    if (filtersOpen && (ui.kind === 'card' || ui.kind === 'form')) setFiltersOpen(false)
+  }
+  const resetFilters = useCallback(() => setFilters(EMPTY_FILTERS), [])
+  const sortedCourts = useMemo(() => sortCourts(filteredCourts, position), [filteredCourts, position])
   const visibleCourts = useMemo(() => filterCourts(sortedCourts, deferredQuery), [sortedCourts, deferredQuery])
 
   const selectedId = ui.kind === 'card' ? ui.courtId : null
   const selectedCourt: Court | null = selectedId != null ? (byId(selectedId) ?? null) : null
+  // The open card's court always stays on the map, even if it fails the filters.
+  const mapCourts = useMemo(
+    () => (selectedCourt != null && !filteredCourts.includes(selectedCourt) ? [...filteredCourts, selectedCourt] : filteredCourts),
+    [filteredCourts, selectedCourt],
+  )
   const addMode = ui.kind === 'form'
   const picking = ui.kind === 'form' && ui.picking
 
@@ -144,7 +168,25 @@ function App() {
     onSelect: selectCourt,
     onRetry: retry,
     onAdd: startAdd,
+    filtersActive,
+    onResetFilters: resetFilters,
   }
+
+  const filterButton = (variant: 'floating' | 'inline') => (
+    <FilterButton count={filterCount} expanded={filtersOpen} onClick={toggleFilters} variant={variant} />
+  )
+
+  const filterPanel = (variant: 'sheet' | 'dropdown') => (
+    <FilterPanel
+      variant={variant}
+      filters={filters}
+      surfaces={surfaces}
+      matchCount={filteredCourts.length}
+      onChange={setFilters}
+      onReset={resetFilters}
+      onClose={closeFilters}
+    />
+  )
 
   const form = (
     <CourtForm
@@ -167,7 +209,13 @@ function App() {
     <>
       <div className="app-shell">
         {!isMobile && (
-          <SidePanel query={query} onQueryChange={handleQueryChange} onAdd={startAdd}>
+          <SidePanel
+            query={query}
+            onQueryChange={handleQueryChange}
+            onAdd={startAdd}
+            filterButton={filterButton('inline')}
+            filterPanel={filtersOpen ? filterPanel('dropdown') : null}
+          >
             {/* Kept mounted (hidden) while a card or form is shown, so scroll position persists. */}
             <div
               className="side-panel__pane side-panel__list"
@@ -194,7 +242,7 @@ function App() {
         )}
 
         <MapView
-          courts={courts}
+          courts={mapCourts}
           position={position}
           selectedCourt={selectedCourt}
           addMode={addMode}
@@ -220,12 +268,18 @@ function App() {
                 onChange={setQuery}
                 onTrigger={openSearch}
               />
+              {filterButton('floating')}
             </div>
           )}
 
           {ui.kind === 'search' && (
-            <SearchScreen query={query} onQueryChange={setQuery} onBack={closeSearch} list={listProps} />
+            <SearchScreen query={query} onQueryChange={setQuery} onBack={closeSearch}
+              list={listProps}
+              filterButton={filterButton('inline')}
+            />
           )}
+
+          {filtersOpen && filterPanel('sheet')}
 
           {selectedCourt != null && (
             <CardSheet
