@@ -35,16 +35,20 @@ docker compose up -d --build
 
 ## Деплой на Dockhost
 
-Манифест проекта — корневой `dockhost.yaml` (два билда из этого репозитория: `backend/` и `frontend/`, два контейнера в одном проекте, сетевой диск для `/app/data`, домен и маршрут `/` → `frontend:80`).
+Прод: **https://hizm-xjs6-o8dd.gw-1a.dockhost.net** (проект Dockhost `courtmap`).
 
-Порядок:
+Манифест проекта — корневой `dockhost.yaml` (два билда из этого репозитория: `backend/` и `frontend/`, два контейнера, сетевые сервисы `backend:8000` и `frontend:80`, сетевой диск для `/app/data`, домен и маршрут `/` → `frontend:80`). Он сверен с фактическим деплоем (`dockhost compose dump courtmap`).
 
-1. **Репозиторий**: закоммитить изменения, в `dockhost.yaml` заменить `<GIT_REPO_URL>` на URL этого репозитория.
-2. **Проект**: в панели Dockhost применить `dockhost.yaml` (или создать проект/билды/контейнеры вручную по нему). Каждый push в ветку `main` пересобирает образы (Push-to-Deploy).
-3. **Переменные окружения**: задать сильный `ADMIN_TOKEN`, `CORS_ORIGINS` = прод-домен + `http://localhost:5173` (для локальной разработки). При поддержке build-args указать `VITE_YANDEX_MAPS_KEY` / `VITE_YANDEX_GEOCODER_KEY` (иначе используются дефолты из `frontend/.env.production`).
-4. **Сетевой диск** для backend: mount `/app/data` (SQLite + фото). Реплик backend держать **ровно 1** — SQLite не поддерживает concurrent-writer.
-5. **Домен и маршрут**: `/` → `frontend:80`. Нginx внутри фронтенда сам проксирует `/courts`, `/photos/`, `/health`, `/docs`, `/openapi.json` на backend по имени контейнера — имя `backend` должно совпадать с именем контейнера в `dockhost.yaml`.
-6. **Ключи Яндекс.Карт и Геокодера**: добавить прод-домен в allowed referers в консоли Яндекса (иначе карта не загрузится даже при валидных ключах — ограничение по HTTP Referer).
+Первичное развёртывание (CLI `dockhost`), в два этапа — образ контейнера является результатом билда репозитория (`dockhost.io/<projectId>/build/<repo>:<sha>`):
+
+1. **Проект и сборка**: `dockhost project create --name courtmap`, затем `compose apply` файла только с секциями `environment`/`volumes`/`repositories` и `dockhost repository build backend|frontend --project courtmap`.
+2. **Контейнеры и сеть**: после сборки — `dockhost compose apply dockhost.yaml --project courtmap`.
+3. **`ADMIN_TOKEN`** в манифест не кладётся (иначе повторный apply перезапишет боевой токен) — задаётся через `dockhost environment variable` или панель; в контейнер приходит как `$ADMIN_TOKEN`.
+4. **Ключи Яндекс.Карт и Геокодера**: добавить прод-домен в allowed referers в консоли Яндекса (иначе карта не загрузится даже при валидных ключах — ограничение по HTTP Referer). Build-args Dockhost не поддерживает — ключи берутся из дефолтов `ARG` в `frontend/Dockerfile`.
+
+Ограничения: реплик backend **ровно 1** + `strategy: Recreate` (SQLite — single-writer). Имя сервиса `backend` зашито в `proxy_pass` nginx (`/courts`, `/photos/`, `/health`, `/docs`, `/openapi.json`). Ресурсы в `repositories` — это ресурсы сборки: фронтенду нужно ≥1GiB под `npm ci` + `vite build`.
+
+Обновление: push в `main` — Dockhost отслеживает репозиторий (до ~2 минут). Если образ не обновился: `dockhost repository build <repo> --project courtmap`, затем проверить тег через `dockhost container list --project courtmap`.
 
 Проверка после деплоя: открыть приложение по публичному адресу, добавить площадку с фото и без, проверить дубликат (409), `GET /health` → 200.
 

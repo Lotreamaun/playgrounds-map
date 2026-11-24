@@ -1,96 +1,113 @@
 # Манифест проекта Dockhost для CourtMap (см. openspec/changes/deploy-mvp-dockhost/design.md).
+# Сверено с фактическим деплоем (`dockhost compose dump courtmap`), CLI dockhost 0.23.1.
 #
-# Топология: два контейнера в одном проекте, общаются по имени сервиса,
+# Топология: два контейнера в одном проекте, общаются по имени сетевого сервиса,
 # один сетевой диск для данных backend, домен + маршрут "/" → frontend:80.
 #
-# ВАЖНО: имя контейнера/repository `backend` зашито в proxy_pass фронтенд-nginx
-# (frontend/nginx/default.conf: `proxy_pass http://backend:8000`) — оно должно
-# совпадать с именем репозитория/контейнера backend ниже (иначе — 502 после редеплоя).
+# ВАЖНО: имя сервиса `backend` зашито в proxy_pass фронтенд-nginx
+# (frontend/nginx/default.conf: `proxy_pass http://backend:8000`) — сервис `backend`
+# с портом 8000 обязан существовать (иначе — 502 на всех API-запросах).
 #
-# Перед применением:
-#   - URL репозитория уже указан (github.com/Lotreamaun/playgrounds-map); при необходимости заменить на фактический;
-#   - задать глобальную переменную ADMIN_TOKEN (сильный секрет) через панель/CLI Dockhost
-#     или заменить значение ниже — НЕ коммитить настоящий токен;
-#   - заменить CORS_ORIGINS на прод-домен.
+# Первичное развёртывание — в два этапа, т.к. образ контейнера = результат билда
+# репозитория (dockhost.io/<projectId>/build/<repo>:<commit sha>):
+#   1. `dockhost project create --name courtmap`, затем apply только секций
+#      environment/volumes/repositories → `dockhost repository build backend|frontend`;
+#   2. после сборки — apply всего файла (containers + network).
+# Повторный apply всего файла безопасен: секреты здесь не хранятся.
+#
+# Секреты в файл НЕ кладём: ADMIN_TOKEN задаётся отдельно —
+#   dockhost environment variable ... --project courtmap   (или в панели)
+# и подставляется в контейнер через $ADMIN_TOKEN.
 version: 1
 project: courtmap
+timezone: UTC
+
+dns:
+    nameservers:
+        - 8.8.8.8
+        - 8.8.4.4
+
+environment:
+    variables:
+        # ADMIN_TOKEN — НЕ здесь (см. шапку). CORS в проде не нужен (same-origin),
+        # прод-домен оставлен для явности + localhost для локальной разработки.
+        CORS_ORIGINS: https://hizm-xjs6-o8dd.gw-1a.dockhost.net,http://localhost:5173
+
+volumes:
+    courtmap-data:
+        type: ssd
+        size: 1Gib
 
 repositories:
-    # Оба билда собираются из одного репозитория, но из разных каталогов
+    # Оба билда из одного репозитория, разные каталоги.
+    # cpu/memory здесь — ресурсы СБОРКИ (npm ci + vite build на 128MiB падают по памяти).
+    # Build-args платформа не поддерживает: VITE_* берутся из дефолтов ARG в frontend/Dockerfile.
     backend:
         url: https://github.com/Lotreamaun/playgrounds-map.git
         branch: main
         dockerFile: backend/Dockerfile
         dockerContext: backend
         cpu: 1
-        cpuFraction: 20
-        memory: 256MiB
+        cpuFraction: 50
+        memory: 512MiB
 
     frontend:
         url: https://github.com/Lotreamaun/playgrounds-map.git
         branch: main
         dockerFile: frontend/Dockerfile
         dockerContext: frontend
-        # build-аргументы ключей Яндекса переопределяют дефолты в Dockerfile;
-        # VITE_API_BASE_URL остаётся "" (same-origin)
-        # dockerArgs:
-        #   - name: VITE_YANDEX_MAPS_KEY
-        #     value: <yandex maps key>
-        #   - name: VITE_YANDEX_GEOCODER_KEY
-        #     value: <yandex geocoder key>
         cpu: 1
-        cpuFraction: 20
-        memory: 128MiB
-
-environment:
-    variables:
-        # Сильный токен задать через панель/CLI (значение ниже — только локальный дефолт)
-        ADMIN_TOKEN: change-me
-        CORS_ORIGINS: https://app.example.com,http://localhost:5173
-
-volumes:
-    data:
-        type: ssd
-        size: 1Gib
+        cpuFraction: 50
+        memory: 1024MiB
 
 containers:
     backend:
-        image: backend
+        # тег = sha коммита; платформа обновляет его при пересборке
+        image: dockhost.io/240bb9b7-c9d2-4c43-a4cf-47a036ea3451/build/backend:80fb2c78de801f17f8ff3e974e699c943162da36
         replicas: 1                                       # SQLite — single-writer, >1 реплики сломает БД
+        strategy: Recreate                                # не поднимать вторую копию на том же диске
         resources:
-            memory: 256MiB
             cpu: 1
             cpuFraction: 20
+            memory: 256MiB
+        ports:
+            - 8000/TCP
         variables:
             ADMIN_TOKEN: $ADMIN_TOKEN
             CORS_ORIGINS: $CORS_ORIGINS
         volumes:
-            - name: data
+            - name: courtmap-data
               mountPath: /app/data
 
     frontend:
-        image: frontend
+        image: dockhost.io/240bb9b7-c9d2-4c43-a4cf-47a036ea3451/build/frontend:80fb2c78de801f17f8ff3e974e699c943162da36
         replicas: 1
+        strategy: Recreate
         resources:
-            memory: 128MiB
             cpu: 1
             cpuFraction: 20
+            memory: 128MiB
         ports:
-            - 80
+            - 80/TCP
 
 network:
-    domains:
-        www: ~                                            # динамический домен (или host: для внешнего)
-
     services:
+        backend:                                          # hostname для nginx proxy_pass
+            container: backend
+            ports:
+                - 8000/TCP
         frontend:
             container: frontend
             ports:
-                - 80
+                - 80/TCP
+
+    domains:
+        courtmap: ~                                       # динамический домен hizm-xjs6-o8dd.gw-1a.dockhost.net
 
     routes:
-        www:
-            domain: www
+        courtmap:
+            domain: courtmap
             path: /
+            type: internal
             service: frontend
-            port: 80
+            port: 80/TCP
