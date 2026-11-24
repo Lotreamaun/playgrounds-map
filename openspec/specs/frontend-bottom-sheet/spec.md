@@ -1,9 +1,7 @@
 ## Purpose
 
 Lets the mobile frontend reuse a single container for secondary UI: a bottom sheet that slides up over the map for the court card and the list, plus a full-screen modal for the add-court form.
-
 ## Requirements
-
 ### Requirement: Bottom sheet opens over the map
 On mobile the court card and the court list SHALL be displayed in a bottom sheet that slides up over the map canvas, keeping the map visible and alive behind it.
 
@@ -88,3 +86,20 @@ The add-court form SHALL open as a full-screen modal that slides up from the bot
 #### Scenario: FAB remains accessible without visible text
 - **WHEN** пользователь полагается на screen reader
 - **THEN** кнопка добавления объявляется по своему `aria-label`, несмотря на отсутствие видимого текста
+
+### Requirement: Floating bottom controls include a buffer beyond the safe-area inset
+
+Плавающие элементы управления у нижнего края экрана на мобильном (кнопка добавления FAB) SHALL отступать от нижнего края на величину `env(safe-area-inset-bottom)` плюс дополнительный буфер, а не полагаться только на сам `env()`-отступ, который не учитывает раскрытое состояние собственной панели браузера.
+
+#### Scenario: FAB clears the browser's own bottom chrome
+- **WHEN** пользователь видит кнопку добавления (FAB) на мобильном при развёрнутой панели браузера
+- **THEN** кнопка не перекрывается и не упирается в панель браузера, оставаясь полностью нажимаемой
+
+### Requirement: Full-screen form modal resizes for the on-screen keyboard
+
+Полноэкранная модалка формы добавления площадки SHALL корректно пересчитывать доступную высоту при появлении/скрытии экранной клавиатуры, когда пользователь фокусируется на текстовом поле внутри неё.
+
+#### Scenario: Layout adjusts when the keyboard appears
+- **WHEN** пользователь на мобильном фокусируется на поле адреса в развёрнутой полноэкранной форме, и появляется экранная клавиатура
+- **THEN** видимая область формы пересчитывается под клавиатуру, а не перекрывается или обрезается ею
+

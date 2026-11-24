@@ -15,7 +15,11 @@ function loadScript(apiKey: string): Promise<void> {
     script.id = SCRIPT_ID
     script.src = `https://api-maps.yandex.ru/v3/?apikey=${encodeURIComponent(apiKey)}&lang=ru_RU`
     script.onload = () => resolve()
-    script.onerror = () => reject(new Error('Failed to load the Yandex Maps JS API script'))
+    script.onerror = () => {
+      // Drop the failed tag, otherwise a retry would see it and resolve without loading anything.
+      script.remove()
+      reject(new Error('Failed to load the Yandex Maps JS API script'))
+    }
     document.head.appendChild(script)
   })
 }
@@ -26,12 +30,10 @@ export interface YandexMapsModules {
   YMapDefaultFeaturesLayer: ComponentType<any>
   YMapMarker: ComponentType<any>
   YMapListener: ComponentType<any>
-  YMapControls: ComponentType<any>
   YMapFeatureDataSource: ComponentType<any>
   YMapLayer: ComponentType<any>
   YMapClusterer: ComponentType<any>
   clusterByGrid: (options: { gridSize: number }) => unknown
-  YMapControl: ComponentType<any>
   reactify: { useDefault: <T>(value: T) => T }
 }
 
@@ -58,12 +60,10 @@ export function loadYandexMaps(apiKey: string): Promise<YandexMapsModules> {
         YMapDefaultFeaturesLayer: base.YMapDefaultFeaturesLayer,
         YMapMarker: base.YMapMarker,
         YMapListener: base.YMapListener,
-        YMapControls: base.YMapControls,
         YMapFeatureDataSource: base.YMapFeatureDataSource,
         YMapLayer: base.YMapLayer,
         YMapClusterer: clusterer.YMapClusterer,
         clusterByGrid: clusterer.clusterByGrid,
-        YMapControl: base.YMapControl,
         reactify,
       } satisfies YandexMapsModules
     })

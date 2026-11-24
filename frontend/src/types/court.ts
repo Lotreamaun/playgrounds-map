@@ -77,6 +77,8 @@ export interface components {
             condition: string;
             /** Has Lighting */
             has_lighting: boolean;
+            /** Is Covered */
+            is_covered?: boolean | null;
             /** Description */
             description?: string | null;
             /** Address */
@@ -100,6 +102,8 @@ export interface components {
             condition: string;
             /** Has Lighting */
             has_lighting: boolean;
+            /** Is Covered */
+            is_covered?: boolean | null;
             /** Description */
             description?: string | null;
             /** Address */

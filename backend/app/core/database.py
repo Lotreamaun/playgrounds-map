@@ -14,6 +14,7 @@ engine = create_engine(settings.DATABASE_URL, connect_args=connect_args)
 def create_db_and_tables() -> None:
     SQLModel.metadata.create_all(engine)
     _migrate_courts_address()
+    _migrate_courts_is_covered()
 
 
 def _migrate_courts_address() -> None:
@@ -25,6 +26,18 @@ def _migrate_courts_address() -> None:
         return
     with engine.connect() as connection:
         connection.execute(text("ALTER TABLE courts ADD COLUMN address VARCHAR"))
+        connection.commit()
+
+
+def _migrate_courts_is_covered() -> None:
+    inspector = inspect(engine)
+    if "courts" not in inspector.get_table_names():
+        return
+    columns = {col["name"] for col in inspector.get_columns("courts")}
+    if "is_covered" in columns:
+        return
+    with engine.connect() as connection:
+        connection.execute(text("ALTER TABLE courts ADD COLUMN is_covered BOOLEAN"))
         connection.commit()
 
 

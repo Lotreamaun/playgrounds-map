@@ -12,6 +12,7 @@ class CourtBase(SQLModel):
     surface: str
     condition: str
     has_lighting: bool
+    is_covered: Optional[bool] = None
     description: Optional[str] = None
     address: Optional[str] = None
     photo_url: Optional[str] = None

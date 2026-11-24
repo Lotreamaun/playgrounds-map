@@ -1,9 +1,6 @@
-import { useEffect, useState } from 'react'
+import { memo } from 'react'
 import { Basketball, MapPin } from '@phosphor-icons/react'
 import type { Icon } from '@phosphor-icons/react'
-import type { Court } from '../services/api'
-import { BASE_URL } from '../services/api'
-import { translateSurface, translateCondition, translateSport } from '../utils/labels'
 
 const SPORT_ICONS: Record<string, Icon> = {
   basketball: Basketball,
@@ -11,115 +8,39 @@ const SPORT_ICONS: Record<string, Icon> = {
 const DEFAULT_SPORT_ICON = MapPin
 const SPORT_PIN_MODIFIERS = ['basketball', 'football', 'hockey', 'tennis']
 
-export function CourtCard({ court }: { court: Court }) {
-  const address =
-    court.address != null && court.address !== '' ? court.address : 'Адрес не указан'
-  const photo = court.photo_url != null && court.photo_url !== ''
-    ? `${BASE_URL}${court.photo_url}`
-    : null
-  const [photoOpen, setPhotoOpen] = useState(false)
-
-  useEffect(() => {
-    if (!photoOpen) return
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setPhotoOpen(false)
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [photoOpen])
-
-  return (
-    <div className="court-card">
-      {photo != null && (
-        <button
-          type="button"
-          className="court-card__photo-btn"
-          onClick={() => setPhotoOpen(true)}
-          aria-label={`Открыть фото ${court.name ?? 'площадки'}`}
-        >
-          <img
-            className="court-card__photo"
-            src={photo}
-            alt={court.name ?? 'Фото площадки'}
-          />
-        </button>
-      )}
-      <div className="court-card__body">
-        <div className="court-card__sport-chip">
-          <span className="court-card__sport-dot" style={{ background: `var(--sport-${court.sport_type})` }} />
-          {(() => { const Icon = SPORT_ICONS[court.sport_type] ?? DEFAULT_SPORT_ICON; return <Icon size={14} /> })()}
-          <span>{translateSport(court.sport_type)}</span>
-        </div>
-        <h3>{court.name ?? `Площадка #${court.id ?? ''}`}</h3>
-        <p className="court-card__meta">{address} · {translateSurface(court.surface)} · {translateCondition(court.condition)}</p>
-        <a
-          className="btn btn-secondary court-card__route"
-          href={`https://yandex.ru/maps/?rtext=~${court.latitude},${court.longitude}`}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Построить маршрут
-        </a>
-      </div>
-      {photo != null && photoOpen && (
-        <div
-          className="court-photo-lightbox"
-          role="dialog"
-          aria-modal="true"
-          aria-label={court.name ?? 'Фото площадки'}
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setPhotoOpen(false)
-          }}
-        >
-          <img
-            className="court-photo-lightbox__image"
-            src={photo}
-            alt={court.name ?? 'Фото площадки'}
-          />
-          <button
-            type="button"
-            className="court-photo-lightbox__close"
-            aria-label="Закрыть фото"
-            onClick={() => setPhotoOpen(false)}
-          >
-            ×
-          </button>
-        </div>
-      )}
-    </div>
-  )
-}
-
 interface CourtMarkerProps {
-  court: Court
+  id: number | null
+  sportType: string
+  name: string | null
+  selected: boolean
   addMode: boolean
-  isSelected?: boolean
-  onSelect: (court: Court) => void
+  onSelect: (id: number) => void
 }
 
-function CourtMarker({ court, addMode, isSelected = false, onSelect }: CourtMarkerProps) {
+function CourtMarker({ id, sportType, name, selected, addMode, onSelect }: CourtMarkerProps) {
   const handleClick = () => {
-    if (addMode) return
-    onSelect(court)
+    if (addMode || id == null) return
+    onSelect(id)
   }
 
-  const sportModifier = SPORT_PIN_MODIFIERS.includes(court.sport_type)
-    ? ` court-marker__pin--${court.sport_type}`
+  const sportModifier = SPORT_PIN_MODIFIERS.includes(sportType)
+    ? ` court-marker__pin--${sportType}`
     : ' court-marker__pin--default'
-  const SportIcon = SPORT_ICONS[court.sport_type] ?? DEFAULT_SPORT_ICON
+  const SportIcon = SPORT_ICONS[sportType] ?? DEFAULT_SPORT_ICON
 
   return (
     <div className="court-marker">
       <button
         type="button"
-        className={`court-marker__pin${isSelected ? ' court-marker__pin--selected' : ''}${sportModifier}`}
-        aria-label={court.name ?? `Площадка #${court.id ?? ''}`}
+        className={`court-marker__pin${selected ? ' court-marker__pin--selected' : ''}${sportModifier}`}
+        aria-label={name ?? `Площадка #${id ?? ''}`}
+        aria-pressed={selected}
         onClick={handleClick}
       >
-        <SportIcon weight={isSelected ? 'duotone' : 'regular'} size={18} color="#fff" />
+        <SportIcon weight={selected ? 'duotone' : 'regular'} size={18} color="#fff" />
       </button>
     </div>
   )
 }
 
-export default CourtMarker
+export default memo(CourtMarker)

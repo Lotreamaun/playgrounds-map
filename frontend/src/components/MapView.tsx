@@ -1,19 +1,26 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Minus, NavigationArrow, Plus } from '@phosphor-icons/react'
-import { getCourts } from '../services/api'
 import type { Court } from '../services/api'
 import CourtMarker from './CourtMarker'
+import MapControls from './MapControls'
 import type { Coordinates } from './CourtForm'
 import { loadYandexMaps } from '../services/yandexMaps'
 import type { YandexMapsModules } from '../services/yandexMaps'
 import { useMediaQuery } from '../hooks/useMediaQuery'
+import { requestGeolocation } from '../hooks/useGeolocation'
+import type { GeoPosition } from '../hooks/useGeolocation'
+import { showToast } from '../hooks/useToast'
 
 const TBILISI_CENTER: [number, number] = [44.8271, 41.7151] // [lon, lat]
 const DEFAULT_ZOOM = 12
-const DEBOUNCE_MS = 250
+/** Selecting a court zooms in at least this far, so its marker leaves any cluster. */
+const SELECT_ZOOM = 15
 const INITIAL_LOCATION = { center: TBILISI_CENTER, zoom: DEFAULT_ZOOM }
 const API_KEY = import.meta.env.VITE_YANDEX_MAPS_KEY as string | undefined
 const GRID_SIZE_PX = 64
+const MOVE_DURATION_MS = 250
+/** A map click this soon after a marker/cluster tap belongs to that tap, not to empty map. */
+const MARKER_TAP_GUARD_MS = 400
+const NO_MARGIN: [number, number, number, number] = [0, 0, 0, 0]
 
 function clusterZoomForExtent(
   coords: [number, number][],
@@ -49,166 +56,159 @@ interface CourtFeature {
   properties: { court: Court }
 }
 
-interface MapViewProps {
-  courts: Court[]
-  onCourtsChange: (courts: Court[]) => void
-  addMode: boolean
-  onMapClick: (latitude: number, longitude: number) => void
-  pick?: Coordinates | null
-  selectedCourt?: Court | null
-  onMarkerTap: (court: Court) => void
-  isMobile: boolean
+interface MapInstance {
+  zoom: number
+  zoomRange: { min: number; max: number }
+  setLocation: (location: {
+    center?: [number, number]
+    zoom?: number
+    duration?: number
+  }) => void
 }
 
-function MapView({ courts, onCourtsChange, addMode, onMapClick, pick, selectedCourt, onMarkerTap, isMobile }: MapViewProps) {
+interface MapViewProps {
+  courts: Court[]
+  position: GeoPosition | null
+  selectedCourt: Court | null
+  addMode: boolean
+  pick: Coordinates | null
+  isMobile: boolean
+  /** Height of the mobile card sheet in px (0 when closed). */
+  sheetHeight: number
+  controlsHidden: boolean
+  onMapClick: (latitude: number, longitude: number) => void
+  onSelectCourt: (id: number) => void
+  /** Tap on empty map outside add mode. */
+  onEmptyTap: () => void
+  onAdd: () => void
+}
+
+interface MapSceneProps extends MapViewProps {
+  modules: YandexMapsModules
+}
+
+function MapScene({
+  modules,
+  courts,
+  position,
+  selectedCourt,
+  addMode,
+  pick,
+  isMobile,
+  sheetHeight,
+  controlsHidden,
+  onMapClick,
+  onSelectCourt,
+  onEmptyTap,
+  onAdd,
+}: MapSceneProps) {
   const isDark = useMediaQuery('(prefers-color-scheme: dark)')
-  const [modules, setModules] = useState<YandexMapsModules | null>(null)
-  const [error, setError] = useState<string | null>(() =>
-    API_KEY == null || API_KEY === ''
-      ? 'Укажите VITE_YANDEX_MAPS_KEY, чтобы отобразить карту Яндекс.Карт.'
-      : null,
-  )
-  const mapInstanceRef = useRef<{
-    bounds: [[number, number], [number, number]]
-    zoom: number
-    zoomRange: { min: number; max: number }
-    setLocation: (location: { center?: [number, number]; zoom?: number }) => void
-  } | null>(null)
-  const debounceRef = useRef<number | null>(null)
+  const mapRef = useRef<MapInstance | null>(null)
+  const [mapReady, setMapReady] = useState(false)
+  const lastMarkerTapRef = useRef(0)
+  const positionCenteredRef = useRef(false)
+  const selectedIdRef = useRef<number | null | undefined>(undefined)
   const addModeRef = useRef(addMode)
-  const [isLocating, setIsLocating] = useState(false)
+  const positionRef = useRef(position)
+  const onEmptyTapRef = useRef(onEmptyTap)
+  const onMapClickRef = useRef(onMapClick)
+  const onSelectCourtRef = useRef(onSelectCourt)
+
+  const selectedId = selectedCourt?.id ?? null
+  const selectedLat = selectedCourt?.latitude
+  const selectedLon = selectedCourt?.longitude
 
   useEffect(() => {
     addModeRef.current = addMode
-  }, [addMode])
+    positionRef.current = position
+    selectedIdRef.current = selectedId
+    onEmptyTapRef.current = onEmptyTap
+    onMapClickRef.current = onMapClick
+    onSelectCourtRef.current = onSelectCourt
+  })
 
+  // Center on the user once, on the first fix — unless a court (deep link) already took the camera.
   useEffect(() => {
-    if (selectedCourt == null) return
-    // Center-only: per the SDK, an update without `zoom` leaves the current
-    // zoom untouched, so selecting a court never fights the user's own zoom.
-    mapInstanceRef.current?.setLocation({
-      center: [selectedCourt.longitude, selectedCourt.latitude],
+    if (!mapReady || position == null || positionCenteredRef.current) return
+    positionCenteredRef.current = true
+    if (selectedIdRef.current != null) return
+    mapRef.current?.setLocation({ center: [position.lon, position.lat], zoom: DEFAULT_ZOOM })
+  }, [mapReady, position])
+
+  // On mobile, wait until the card sheet has been measured, so `margin` already
+  // reserves its height and the marker lands in the visible part above it.
+  const sheetMeasured = !isMobile || sheetHeight > 0
+
+  // Zoom in only if needed (never out), so the selected marker is shown unclustered.
+  useEffect(() => {
+    const map = mapRef.current
+    if (!mapReady || map == null || selectedLat == null || selectedLon == null || !sheetMeasured) return
+    map.setLocation({
+      center: [selectedLon, selectedLat],
+      zoom: Math.max(map.zoom, Math.min(SELECT_ZOOM, map.zoomRange.max)),
+      duration: MOVE_DURATION_MS,
     })
-  }, [selectedCourt])
+  }, [mapReady, selectedId, selectedLat, selectedLon, sheetMeasured])
 
+  const pickLat = pick?.latitude
+  const pickLon = pick?.longitude
   useEffect(() => {
-    if (pick == null) return
-    mapInstanceRef.current?.setLocation({
-      center: [pick.longitude, pick.latitude],
-    })
-  }, [pick])
+    if (!mapReady || pickLat == null || pickLon == null) return
+    mapRef.current?.setLocation({ center: [pickLon, pickLat] })
+  }, [mapReady, pickLat, pickLon])
 
-  useEffect(() => {
-    if (API_KEY == null || API_KEY === '') return
-    loadYandexMaps(API_KEY)
-      .then(setModules)
-      .catch((err) => {
-        console.error('Failed to load Yandex Maps API:', err)
-        const detail = err instanceof Error ? err.message : String(err)
-        setError(`Не удалось загрузить Яндекс.Карты: ${detail}`)
-      })
+  const handleMapRef = useCallback((instance: MapInstance | null) => {
+    mapRef.current = instance
+    setMapReady(instance != null)
   }, [])
 
-  const fetchCourts = useCallback(() => {
-    const map = mapInstanceRef.current
-    if (map == null) return
-    const [corner1, corner2] = map.bounds
-    const lons = [corner1[0], corner2[0]]
-    const lats = [corner1[1], corner2[1]]
-    getCourts({
-      min_lat: Math.min(...lats),
-      max_lat: Math.max(...lats),
-      min_lon: Math.min(...lons),
-      max_lon: Math.max(...lons),
-    })
-      .then(onCourtsChange)
-      .catch((err) => {
-        console.error('Failed to fetch courts:', err)
-      })
-  }, [onCourtsChange])
-
-  const scheduleFetch = useCallback(() => {
-    if (debounceRef.current !== null) window.clearTimeout(debounceRef.current)
-    debounceRef.current = window.setTimeout(fetchCourts, DEBOUNCE_MS)
-  }, [fetchCourts])
-
-  const handleMapRef = useCallback(
-    (instance: typeof mapInstanceRef.current) => {
-      mapInstanceRef.current = instance
-      if (instance == null) return
-
-      const centerOnFallback = () => instance.setLocation({ center: TBILISI_CENTER, zoom: DEFAULT_ZOOM })
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition((position) => {
-          const { latitude, longitude } = position.coords
-          instance.setLocation({ center: [longitude, latitude], zoom: DEFAULT_ZOOM })
-        }, centerOnFallback)
-      } else {
-        centerOnFallback()
-      }
-
-      fetchCourts()
-    },
-    [fetchCourts],
-  )
-
-  useEffect(() => {
-    return () => {
-      if (debounceRef.current !== null) window.clearTimeout(debounceRef.current)
+  const handleMapClick = useCallback((object: unknown, event: { coordinates: [number, number] }) => {
+    if (object != null) return
+    if (addModeRef.current) {
+      onMapClickRef.current(event.coordinates[1], event.coordinates[0])
+      return
     }
+    if (performance.now() - lastMarkerTapRef.current < MARKER_TAP_GUARD_MS) return
+    onEmptyTapRef.current()
   }, [])
 
-  const handleMapClick = useCallback(
-    (object: unknown, event: { coordinates: [number, number] }) => {
-      if (addModeRef.current && object == null) {
-        onMapClick(event.coordinates[1], event.coordinates[0])
-      }
-    },
-    [onMapClick],
-  )
+  const handleMarkerSelect = useCallback((id: number) => {
+    lastMarkerTapRef.current = performance.now()
+    onSelectCourtRef.current(id)
+  }, [])
 
   const handleZoomIn = useCallback(() => {
-    const map = mapInstanceRef.current
+    const map = mapRef.current
     if (map == null) return
-    map.setLocation({ zoom: Math.min(map.zoom + 1, map.zoomRange.max) })
+    map.setLocation({ zoom: Math.min(map.zoom + 1, map.zoomRange.max), duration: MOVE_DURATION_MS })
   }, [])
 
   const handleZoomOut = useCallback(() => {
-    const map = mapInstanceRef.current
+    const map = mapRef.current
     if (map == null) return
-    map.setLocation({ zoom: Math.max(map.zoom - 1, map.zoomRange.min) })
+    map.setLocation({ zoom: Math.max(map.zoom - 1, map.zoomRange.min), duration: MOVE_DURATION_MS })
   }, [])
 
-  const handleGeolocate = useCallback(() => {
-    const map = mapInstanceRef.current
-    if (map == null) return
-    if (!navigator.geolocation) {
-      map.setLocation({ center: TBILISI_CENTER })
+  const handleLocate = useCallback(async () => {
+    const state = await requestGeolocation()
+    if (state.position == null) {
+      showToast('Не удалось определить местоположение')
       return
     }
-    setIsLocating(true)
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setIsLocating(false)
-        // Center-only, same reasoning as the selectedCourt effect above — a
-        // manual "locate me" tap shouldn't fight the user's chosen zoom.
-        map.setLocation({ center: [position.coords.longitude, position.coords.latitude] })
-      },
-      () => {
-        setIsLocating(false)
-        map.setLocation({ center: TBILISI_CENTER })
-      },
-      { enableHighAccuracy: true, timeout: 8000, maximumAge: 30000 },
-    )
+    // Center-only, so a manual "locate me" doesn't fight the user's chosen zoom.
+    mapRef.current?.setLocation({
+      center: [state.position.lon, state.position.lat],
+      duration: MOVE_DURATION_MS,
+    })
   }, [])
 
   const handleClusterClick = useCallback((coordinates: [number, number], clustered: CourtFeature[]) => {
-    const map = mapInstanceRef.current
+    lastMarkerTapRef.current = performance.now()
+    const map = mapRef.current
     if (map == null) return
-
     const coords = clustered.map((f) => f.geometry.coordinates)
     const targetZoom = clusterZoomForExtent(coords, map.zoom, map.zoomRange.max)
-    map.setLocation({ center: coordinates, zoom: targetZoom })
+    map.setLocation({ center: coordinates, zoom: targetZoom, duration: MOVE_DURATION_MS })
   }, [])
 
   const features = useMemo<CourtFeature[]>(
@@ -222,92 +222,63 @@ function MapView({ courts, onCourtsChange, addMode, onMapClick, pick, selectedCo
     [courts],
   )
 
-  if (error != null) {
-    return <div className="map-view map-view--message">{error}</div>
-  }
+  const { YMap, YMapDefaultSchemeLayer, YMapDefaultFeaturesLayer, YMapMarker, YMapListener } = modules
+  const { YMapFeatureDataSource, YMapLayer, YMapClusterer, clusterByGrid, reactify } = modules
 
-  if (modules == null) {
-    return <div className="map-view map-view--message">Загрузка карты…</div>
-  }
+  const clusterMethod = useMemo(() => clusterByGrid({ gridSize: GRID_SIZE_PX }), [clusterByGrid])
 
-  const {
-    YMap,
-    YMapDefaultSchemeLayer,
-    YMapDefaultFeaturesLayer,
-    YMapMarker,
-    YMapListener,
-    YMapControls,
-    YMapFeatureDataSource,
-    YMapLayer,
-    YMapClusterer,
-    clusterByGrid,
-    YMapControl,
-    reactify,
-  } = modules
-
-  const clusterMethod = clusterByGrid({ gridSize: 64 })
-
-  const renderMarker = (feature: CourtFeature) => (
-    <YMapMarker key={feature.id} coordinates={feature.geometry.coordinates} source="courts">
-      <CourtMarker
-        court={feature.properties.court}
-        addMode={addMode}
-        isSelected={selectedCourt != null && feature.properties.court.id === selectedCourt.id}
-        onSelect={onMarkerTap}
-      />
-    </YMapMarker>
+  const renderMarker = useCallback(
+    (feature: CourtFeature) => {
+      const court = feature.properties.court
+      return (
+        <YMapMarker key={feature.id} coordinates={feature.geometry.coordinates} source="courts">
+          <CourtMarker
+            id={court.id ?? null}
+            sportType={court.sport_type}
+            name={court.name ?? null}
+            selected={selectedId != null && court.id === selectedId}
+            addMode={addMode}
+            onSelect={handleMarkerSelect}
+          />
+        </YMapMarker>
+      )
+    },
+    [YMapMarker, selectedId, addMode, handleMarkerSelect],
   )
 
-  const renderCluster = (coordinates: [number, number], clustered: CourtFeature[]) => (
-    <YMapMarker
-      key={`cluster-${String(clustered[0]?.id)}-${clustered.length}`}
-      coordinates={coordinates}
-      source="courts"
-    >
-      <button
-        type="button"
-        className="court-cluster"
-        aria-label={`Показать ${clustered.length} площадок`}
-        onClick={() => handleClusterClick(coordinates, clustered)}
+  const renderCluster = useCallback(
+    (coordinates: [number, number], clustered: CourtFeature[]) => (
+      <YMapMarker
+        key={`cluster-${String(clustered[0]?.id)}-${clustered.length}`}
+        coordinates={coordinates}
+        source="courts"
       >
-        {clustered.length}
-      </button>
-    </YMapMarker>
+        <button
+          type="button"
+          className="court-cluster"
+          aria-label={`Показать ${clustered.length} площадок`}
+          onClick={() => handleClusterClick(coordinates, clustered)}
+        >
+          {clustered.length}
+        </button>
+      </YMapMarker>
+    ),
+    [YMapMarker, handleClusterClick],
+  )
+
+  // `margin` shifts the map's effective center above the card sheet (design §7).
+  const margin = useMemo<[number, number, number, number]>(
+    () => (isMobile && selectedId != null && sheetHeight > 0 ? [0, 0, sheetHeight, 0] : NO_MARGIN),
+    [isMobile, selectedId, sheetHeight],
   )
 
   return (
-    <div className="map-view">
+    <>
       {/* location is seed-only after mount — camera changes must go through setLocation() on the ref, not by changing this prop */}
-      <YMap location={reactify.useDefault(INITIAL_LOCATION)} ref={handleMapRef}>
+      <YMap location={reactify.useDefault(INITIAL_LOCATION)} margin={margin} theme={isDark ? 'dark' : 'light'} ref={handleMapRef}>
         <YMapDefaultSchemeLayer theme={isDark ? 'dark' : 'light'} />
         <YMapDefaultFeaturesLayer />
-        <YMapListener onClick={handleMapClick} onUpdate={scheduleFetch} />
-        <YMapControls position={isMobile ? 'bottom right' : 'top left'} orientation={isMobile ? 'vertical' : undefined}>
-          {!isMobile && (
-            <YMapControl>
-              <div className="map-zoom-control">
-                <button type="button" className="map-control-btn" aria-label="Приблизить" onClick={handleZoomIn}>
-                  <Plus weight="regular" size={18} />
-                </button>
-                <div className="map-zoom-control__divider" />
-                <button type="button" className="map-control-btn" aria-label="Отдалить" onClick={handleZoomOut}>
-                  <Minus weight="regular" size={18} />
-                </button>
-              </div>
-            </YMapControl>
-          )}
-          <YMapControl>
-            <button
-              type="button"
-              className="map-control-btn map-geolocation-btn"
-              aria-label="Определить моё местоположение"
-              disabled={isLocating}
-              onClick={handleGeolocate}
-            >
-              <NavigationArrow weight="regular" size={18} />
-            </button>
-          </YMapControl>
-        </YMapControls>
+        <YMapListener onClick={handleMapClick} />
         <YMapFeatureDataSource id="courts" />
         <YMapLayer source="courts" type="markers" zIndex={1800} />
         <YMapClusterer marker={renderMarker} cluster={renderCluster} method={clusterMethod} features={features} />
@@ -317,6 +288,69 @@ function MapView({ courts, onCourtsChange, addMode, onMapClick, pick, selectedCo
           </YMapMarker>
         )}
       </YMap>
+      <MapControls
+        isMobile={isMobile}
+        hidden={controlsHidden}
+        onZoomIn={handleZoomIn}
+        onZoomOut={handleZoomOut}
+        onLocate={handleLocate}
+        onAdd={onAdd}
+      />
+    </>
+  )
+}
+
+function MapView(props: MapViewProps) {
+  const hasKey = API_KEY != null && API_KEY !== ''
+  const [modules, setModules] = useState<YandexMapsModules | null>(null)
+  const [failed, setFailed] = useState(false)
+  const [attempt, setAttempt] = useState(0)
+
+  useEffect(() => {
+    if (!hasKey) return
+    let cancelled = false
+    loadYandexMaps(API_KEY as string)
+      .then((loaded) => {
+        if (!cancelled) setModules(loaded)
+      })
+      .catch((err) => {
+        console.error('Failed to load Yandex Maps API:', err)
+        if (!cancelled) setFailed(true)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [hasKey, attempt])
+
+  const handleRetry = useCallback(() => {
+    setFailed(false)
+    setAttempt((n) => n + 1)
+  }, [])
+
+  if (!hasKey) {
+    return (
+      <div className="map-view map-view--message">
+        Укажите VITE_YANDEX_MAPS_KEY, чтобы отобразить карту Яндекс.Карт.
+      </div>
+    )
+  }
+  if (failed) {
+    return (
+      <div className="map-view map-view--message map-view--error" role="alert">
+        <p className="map-view__title">Карта не загрузилась</p>
+        <p className="map-view__hint">Проверьте интернет и попробуйте ещё раз</p>
+        <button type="button" className="btn btn-secondary map-view__retry" onClick={handleRetry}>
+          Повторить
+        </button>
+      </div>
+    )
+  }
+  if (modules == null) {
+    return <div className="map-view map-view--message">Загрузка карты…</div>
+  }
+  return (
+    <div className="map-view">
+      <MapScene modules={modules} {...props} />
     </div>
   )
 }

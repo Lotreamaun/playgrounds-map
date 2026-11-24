@@ -1,9 +1,7 @@
 ## Purpose
 
 Provides the frontend's read-oriented map view: a typed API client, backend-derived TypeScript types, and a Yandex Maps JS API (ymaps3) map that fetches, renders, and clusters courts.
-
 ## Requirements
-
 ### Requirement: Typed API client for courts
 The frontend SHALL provide a typed API client covering `GET /courts`, `POST /courts`, and `GET /courts/{id}`. The base URL for all requests SHALL come from the `VITE_API_BASE_URL` environment variable.
 
@@ -187,3 +185,12 @@ The frontend SHALL provide a map control that, when activated, centers the map o
 #### Scenario: Geolocation icon uses Phosphor NavigationArrow
 - **WHEN** пользователь видит кнопку геолокации на карте
 - **THEN** её иконка — Phosphor `NavigationArrow`, а не иконки из дефолтной темы Yandex Maps
+
+### Requirement: Map viewport size remains stable while the browser's own chrome collapses or expands
+
+Размер контейнера карты на мобильном SHALL оставаться стабильным (не пересчитываться) при скролле или при сворачивании/разворачивании собственной панели браузера (адресная строка/поиск), а не дёргаться при каждом таком событии.
+
+#### Scenario: Map size does not jump on scroll
+- **WHEN** пользователь на мобильном скроллит страницу, и браузерная панель сворачивается или разворачивается
+- **THEN** высота контейнера карты не пересчитывается и не дёргается в этот момент
+

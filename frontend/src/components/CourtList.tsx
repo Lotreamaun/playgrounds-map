@@ -1,104 +1,153 @@
-import { useEffect, useMemo, useState } from 'react'
+import { memo } from 'react'
+import { House } from '@phosphor-icons/react'
 import type { Court } from '../services/api'
-import { distanceHaversine, sortByDistance } from '../utils/distance'
-import { translateSurface, translateCondition } from '../utils/labels'
+import type { CourtsStatus } from '../hooks/useCourts'
+import { NO_ADDRESS, lightingLabel, translateSurface } from '../utils/labels'
+import ConditionBadge from './ConditionBadge'
+import LightIcon from './LightIcon'
+import { formatDistance } from '../utils/distance'
 
-interface CourtListProps {
-  courts: Court[]
-  onSelect: (court: Court) => void
+interface CourtRowProps {
+  court: Court
+  distanceKm: number | null
+  onSelect: (id: number) => void
 }
 
-function CourtList({ courts, onSelect }: CourtListProps) {
-  const [sortByProximity, setSortByProximity] = useState(false)
-  const [position, setPosition] = useState<{ latitude: number; longitude: number } | null>(null)
-  const [geolocationAvailable, setGeolocationAvailable] = useState(true)
+const CourtRow = memo(function CourtRow({ court, distanceKm, onSelect }: CourtRowProps) {
+  const address = court.address != null && court.address !== '' ? court.address : NO_ADDRESS
+  return (
+    <li>
+      <button
+        type="button"
+        className="court-list__row"
+        disabled={court.id == null}
+        onClick={() => court.id != null && onSelect(court.id)}
+      >
+        <span className="court-list__row-main">
+          <span className="court-list__row-heading">
+            <span className="court-list__row-title">{court.name ?? `Площадка #${court.id ?? ''}`}</span>
+            {distanceKm != null && <span className="court-list__row-distance">{formatDistance(distanceKm)}</span>}
+          </span>
+          <span className="court-list__row-address">{address}</span>
+          <span className="court-list__row-meta">
+            {court.is_covered === true && (
+              <>
+                <span className="court-list__row-fact">
+                  <House size={16} aria-hidden="true" />
+                  Крытая
+                </span>
+                <span aria-hidden="true">·</span>
+              </>
+            )}
+            <span>{translateSurface(court.surface)}</span>
+            {court.has_lighting != null && (
+              <>
+                <span aria-hidden="true">·</span>
+                <span className="court-list__row-fact">
+                  <LightIcon on={court.has_lighting} size={16} />
+                  {lightingLabel(court.has_lighting)}
+                </span>
+              </>
+            )}
+          </span>
+        </span>
+        <ConditionBadge condition={court.condition} variant="list" />
+      </button>
+    </li>
+  )
+})
 
-  useEffect(() => {
-    if (!sortByProximity) return
-    if (!navigator.geolocation) {
-      setGeolocationAvailable(false)
-      return
-    }
-    let cancelled = false
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        if (cancelled) return
-        setPosition({ latitude: pos.coords.latitude, longitude: pos.coords.longitude })
-      },
-      () => {
-        if (cancelled) return
-        setGeolocationAvailable(false)
-      },
-      { timeout: 5000, enableHighAccuracy: false, maximumAge: 60000 },
+interface CourtListProps {
+  /** Already filtered and sorted. */
+  courts: Court[]
+  /** Court count before filtering, to tell "no results" from "no courts". */
+  totalCount: number
+  status: CourtsStatus
+  distances: ReadonlyMap<number, number> | null
+  onSelect: (id: number) => void
+  onRetry: () => void
+  onAdd: () => void
+  filtersActive: boolean
+  onResetFilters: () => void
+}
+
+function CourtList({
+  courts,
+  totalCount,
+  status,
+  distances,
+  onSelect,
+  onRetry,
+  onAdd,
+  filtersActive,
+  onResetFilters,
+}: CourtListProps) {
+  if (totalCount === 0 && status === 'loading') {
+    return (
+      <div className="court-list" aria-busy="true" aria-label="Загрузка площадок">
+        <ul className="court-list__items">
+          {[0, 1, 2, 3, 4].map((i) => (
+            <li key={i} className="court-list__skeleton" aria-hidden="true">
+              <span className="court-list__skeleton-text">
+                <span className="skeleton skeleton--title" />
+                <span className="skeleton skeleton--line" />
+                <span className="skeleton skeleton--line skeleton--short" />
+              </span>
+              <span className="skeleton skeleton--badge" />
+            </li>
+          ))}
+        </ul>
+      </div>
     )
-    return () => {
-      cancelled = true
-    }
-  }, [sortByProximity])
+  }
 
-  const sortedCourts = useMemo(() => {
-    if (sortByProximity && position != null) {
-      return sortByDistance(courts, position.latitude, position.longitude)
-    }
-    return courts
-  }, [courts, sortByProximity, position])
+  if (totalCount === 0 && status === 'error') {
+    return (
+      <div className="court-list court-list--state">
+        <p className="court-list__state-title">Не удалось загрузить площадки</p>
+        <button type="button" className="btn btn-secondary" onClick={onRetry}>
+          Повторить
+        </button>
+      </div>
+    )
+  }
+
+  if (totalCount === 0) {
+    return (
+      <div className="court-list court-list--state">
+        <p className="court-list__state-title">Пока нет ни одной площадки</p>
+        <button type="button" className="btn btn-primary" onClick={onAdd}>
+          Добавить площадку
+        </button>
+      </div>
+    )
+  }
+
+  if (courts.length === 0) {
+    return (
+      <div className="court-list court-list--state">
+        <p className="court-list__state-title">Ничего не найдено</p>
+        <p className="court-list__state-hint">Попробуйте изменить запрос: название или часть адреса.</p>
+        {filtersActive && (
+          <button type="button" className="btn btn-secondary" onClick={onResetFilters}>
+            Сбросить фильтры
+          </button>
+        )}
+      </div>
+    )
+  }
 
   return (
     <div className="court-list">
-      <div className="court-list__toolbar">
-        <button
-          type="button"
-          className="court-list__sort-toggle btn btn-primary"
-          onClick={() => setSortByProximity((prev) => !prev)}
-        >
-          {sortByProximity ? 'По умолчанию' : 'По близости'}
-        </button>
-        {sortByProximity && (
-          <span className="court-list__sort-hint">
-            {position != null
-              ? 'Сортировка по расстоянию от вас'
-              : geolocationAvailable
-                ? 'Определяем ваше местоположение…'
-                : 'Геолокация недоступна — показан список по умолчанию'}
-          </span>
-        )}
-      </div>
       <ul className="court-list__items">
-        {sortedCourts.map((court) => {
-          const address =
-            court.address != null && court.address !== '' ? court.address : 'Адрес не указан'
-          const distance =
-            sortByProximity && position != null
-              ? distanceHaversine(position.latitude, position.longitude, court.latitude, court.longitude)
-              : null
-          return (
-            <li key={court.id ?? `${court.latitude},${court.longitude}`}>
-              <button
-                type="button"
-                className="court-list__row"
-                onClick={() => onSelect(court)}
-              >
-                <div className="court-list__row-main">
-                  <h3 className="court-list__row-title">
-                    {court.name ?? `Площадка #${court.id ?? ''}`}
-                  </h3>
-                  <p className="court-list__row-address">{address}</p>
-                </div>
-                <div className="court-list__row-meta">
-                  <span className="court-list__row-surface">{translateSurface(court.surface)}</span>
-                  <span className="court-list__row-condition">{translateCondition(court.condition)}</span>
-                  {distance != null && (
-                    <span className="court-list__row-distance">
-                      {distance < 1
-                        ? `${Math.round(distance * 1000)} м`
-                        : `${distance.toFixed(1)} км`}
-                    </span>
-                  )}
-                </div>
-              </button>
-            </li>
-          )
-        })}
+        {courts.map((court) => (
+          <CourtRow
+            key={court.id ?? `${court.latitude},${court.longitude}`}
+            court={court}
+            distanceKm={court.id != null ? (distances?.get(court.id) ?? null) : null}
+            onSelect={onSelect}
+          />
+        ))}
       </ul>
     </div>
   )
