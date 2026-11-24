@@ -132,6 +132,12 @@
   outline-offset: 2px;
 }
 
+/* The page never scrolls: stop pull-to-refresh and rubber-banding from reloading the app mid-session. */
+html,
+body {
+  overscroll-behavior: none;
+}
+
 body {
   margin: 0;
 }
