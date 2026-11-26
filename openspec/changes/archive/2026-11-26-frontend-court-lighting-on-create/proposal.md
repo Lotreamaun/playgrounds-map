@@ -19,7 +19,7 @@
 
 - **Код (только frontend):** `src/components/CourtForm.tsx`.
 - **Backend/API:** без изменений.
-- **Документация:** openspec-изменение `frontend-court-lighting-on-create`.
+- **Документация:** openspec-изменение `frontend-court-lighting-on-create`; после архивации изменения требуется синхронизировать дельта-спект能力 `frontend-court-ui` в `openspec/specs/frontend-court-ui/spec.md` через `openspec sync`.
 
 ## Non-goals
 - Редактирование освещения существующей площадки после создания.
