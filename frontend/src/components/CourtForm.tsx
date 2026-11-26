@@ -48,6 +48,7 @@ function CourtForm({
   const [surface, setSurface] = useState('')
   const [condition, setCondition] = useState('')
   const [covered, setCovered] = useState(false)
+  const [hasLighting, setHasLighting] = useState(false)
   const [manualAddress, setManualAddress] = useState<{ key: string | null; value: string } | null>(null)
   const [resolved, setResolved] = useState<{ key: string; value: string | null } | null>(null)
   const [comment, setComment] = useState('')
@@ -120,7 +121,7 @@ function CourtForm({
         longitude: coordinates.longitude,
         surface,
         condition,
-        has_lighting: false,
+        has_lighting: hasLighting,
         is_covered: covered,
         address: trimmedAddress !== '' ? trimmedAddress : undefined,
         description: description !== '' ? description : undefined,
@@ -203,6 +204,19 @@ function CourtForm({
           onClick={() => setCovered((v) => !v)}
         >
           <span className="court-form__switch-text">Крытая площадка</span>
+          <span className="court-form__switch-track" aria-hidden="true">
+            <span className="court-form__switch-thumb" />
+          </span>
+        </button>
+
+        <button
+          type="button"
+          role="switch"
+          aria-checked={hasLighting}
+          className="court-form__switch"
+          onClick={() => setHasLighting((v) => !v)}
+        >
+          <span className="court-form__switch-text">Есть освещение</span>
           <span className="court-form__switch-track" aria-hidden="true">
             <span className="court-form__switch-thumb" />
           </span>
