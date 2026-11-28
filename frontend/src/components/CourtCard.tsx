@@ -10,6 +10,7 @@ import { showToast } from '../hooks/useToast'
 import { useEscape } from '../hooks/useEscape'
 import RouteMenu from './RouteMenu'
 import CourtPhoto from './CourtPhoto'
+import CourtFeedback from './CourtFeedback'
 import ConditionBadge from './ConditionBadge'
 import LightIcon from './LightIcon'
 
@@ -184,6 +185,8 @@ function CourtCard({ court, layout, distanceKm = null }: CourtCardProps) {
           )}
         </div>
       )}
+
+      <CourtFeedback court={court} />
 
       {photo != null && photoOpen && (
         <PhotoLightbox src={photo} label={title} onClose={() => setPhotoOpen(false)} />

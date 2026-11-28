@@ -4,3 +4,4 @@ sqlmodel==0.0.42
 python-multipart==0.0.32
 python-dotenv==1.2.3
 slowapi==0.1.10
+httpx==0.29.0

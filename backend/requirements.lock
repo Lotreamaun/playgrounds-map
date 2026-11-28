@@ -25,3 +25,6 @@ uvloop==0.22.1
 watchfiles==1.2.0
 websockets==17.1
 wrapt==2.4.0
+certifi==2026.11.20
+httpcore==1.0.9
+httpx==0.29.0

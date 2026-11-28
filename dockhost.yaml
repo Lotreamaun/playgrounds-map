@@ -17,7 +17,9 @@
 #
 # Секреты в файл НЕ кладём: ADMIN_TOKEN задаётся отдельно —
 #   dockhost environment variable ... --project courtmap   (или в панели)
-# и подставляется в контейнер через $ADMIN_TOKEN.
+# и подставляется в контейнер через $ADMIN_TOKEN. Аналогично задаются
+# ADMIN_PASSWORD, SESSION_SECRET, TELEGRAM_BOT_TOKEN, TELEGRAM_ADMIN_CHAT_ID
+# и PUBLIC_BASE_URL (см. README, раздел «Админка и Telegram-уведомления»).
 version: 1
 project: courtmap
 timezone: UTC
@@ -75,6 +77,15 @@ containers:
         variables:
             ADMIN_TOKEN: $ADMIN_TOKEN
             CORS_ORIGINS: $CORS_ORIGINS
+            # Админка и Telegram-уведомления: значения задаются через
+            # dockhost environment variable, здесь только подстановка.
+            ADMIN_USERNAME: $ADMIN_USERNAME
+            TRUST_PROXY_HEADERS: "true"
+            ADMIN_PASSWORD: $ADMIN_PASSWORD
+            SESSION_SECRET: $SESSION_SECRET
+            TELEGRAM_BOT_TOKEN: $TELEGRAM_BOT_TOKEN
+            TELEGRAM_ADMIN_CHAT_ID: $TELEGRAM_ADMIN_CHAT_ID
+            PUBLIC_BASE_URL: $PUBLIC_BASE_URL
         volumes:
             - name: courtmap-data
               mountPath: /app/data
