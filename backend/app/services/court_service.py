@@ -6,6 +6,7 @@ from pathlib import Path
 from fastapi import HTTPException, UploadFile
 from sqlmodel import Session, select
 
+from app.core.config import get_settings
 from app.models.court import Court
 
 MAX_COURT_DUPLICATE_DISTANCE_METERS = 30.0
@@ -29,7 +30,10 @@ def haversine_meters(lat1: float, lon1: float, lat2: float, lon2: float) -> floa
 class CourtService:
     def __init__(self, session: Session, photo_dir: str | os.PathLike[str] | None = None) -> None:
         self.session = session
-        self.photo_dir = Path(photo_dir) if photo_dir is not None else Path(DEFAULT_PHOTO_DIR)
+        if photo_dir is not None:
+            self.photo_dir = Path(photo_dir)
+        else:
+            self.photo_dir = Path(get_settings().PHOTO_DIR)
 
     def validate_coordinates(self, latitude: float, longitude: float) -> None:
         if latitude is None or longitude is None:

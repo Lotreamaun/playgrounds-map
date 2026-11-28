@@ -1665,3 +1665,410 @@ p {
 
 /* The lit bulb keeps its amber in the list: a small positive cue next to the condition badge. */
 .court-list__row-fact .light-icon--on { color: var(--lighting-on); }
+
+/* ==========================================================================
+   Court feedback: public correction/complaint forms inside the card
+   ========================================================================== */
+.court-feedback {
+  margin-top: var(--space-3);
+}
+
+.court-feedback__trigger {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.court-feedback__btn {
+  flex: 1;
+  min-height: 44px;
+  gap: var(--space-2);
+  font-size: 14px;
+}
+
+.court-feedback__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-2);
+}
+
+.court-feedback__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.court-feedback__title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.court-feedback__current {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.court-feedback__note {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--text-secondary);
+}
+
+.court-feedback__form textarea {
+  min-height: 64px;
+}
+
+/* Same input styling as the add-court form, scoped to the card forms and admin. */
+.court-feedback input[type='text'],
+.court-feedback textarea,
+.admin input[type='text'],
+.admin input[type='search'],
+.admin textarea {
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font: inherit;
+  font-size: var(--text-input);
+  color: var(--text-primary);
+  background: var(--surface);
+}
+
+.court-feedback textarea,
+.admin textarea { resize: vertical; min-height: 64px; }
+
+.court-feedback input:focus,
+.court-feedback textarea:focus,
+.admin input:focus,
+.admin textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-focus);
+}
+
+/* ==========================================================================
+   Admin: login, layout, lists, court form, reports, history
+   ========================================================================== */
+.admin {
+  min-height: 100dvh;
+  padding: 0 var(--space-4) var(--space-6);
+  background: var(--bg);
+}
+
+.admin--loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+}
+
+.admin__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  max-width: 720px;
+  margin: 0 auto;
+  padding: var(--space-4) 0;
+}
+
+.admin__title { flex: none; margin: 0; font-size: 18px; font-weight: 700; }
+
+.admin__nav {
+  display: flex;
+  gap: var(--space-1);
+  flex: 1;
+  margin-left: var(--space-2);
+}
+
+.admin__nav--active { background: var(--surface-2); font-weight: 600; }
+
+.admin__logout { flex: none; gap: var(--space-2); }
+
+.admin-page {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.admin-page__back { margin-bottom: var(--space-2); }
+
+.admin-page__state {
+  margin: var(--space-6) 0;
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.admin-page__state--error { color: var(--feedback-error); }
+
+/* Login */
+
+.admin-login {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100dvh;
+  padding: var(--space-4);
+}
+
+.admin-login__card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  width: 100%;
+  max-width: 380px;
+  padding: var(--space-6);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-1);
+}
+
+.admin-login__title { margin: 0; font-size: 20px; font-weight: 700; }
+.admin-login__hint { margin: 0; font-size: 14px; color: var(--text-secondary); }
+.admin-login__submit { min-height: 48px; gap: var(--space-2); }
+
+/* Search and lists */
+
+.admin-search { max-width: 720px; margin: 0 auto var(--space-3); }
+
+.admin-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-list__empty,
+.admin-history__empty {
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  text-align: center;
+  color: var(--text-secondary);
+  background: var(--surface-2);
+}
+
+.admin-list__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  background: var(--surface);
+}
+
+.admin-list__row:hover { background: var(--surface-2); }
+
+.admin-list__row-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+
+.admin-list__row-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.admin-list__row-sub { font-size: 13px; color: var(--text-secondary); overflow-wrap: anywhere; }
+.admin-list__row-meta { font-size: 12px; color: var(--text-secondary); }
+
+.admin-list__row-icons {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--text-secondary);
+}
+
+.admin-list__row-icon { position: relative; display: inline-flex; }
+.admin-list__row-icon svg + svg { position: absolute; right: -8px; bottom: -6px; }
+
+/* Chips */
+
+.admin-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--text-secondary);
+  background: var(--surface-2);
+}
+
+.admin-chip--ok { color: var(--condition-good); background: color-mix(in srgb, var(--condition-good) 14%, var(--surface)); }
+.admin-chip--muted { color: var(--feedback-error); background: var(--feedback-error-bg); }
+
+.admin-chip--link {
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* Court management */
+
+.admin-court__head { margin-bottom: var(--space-4); }
+
+.admin-court__title { margin: 0 0 var(--space-2); font-size: 20px; font-weight: 700; overflow-wrap: anywhere; }
+
+.admin-court__chips { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+
+.admin-court__form,
+.admin-court__actions,
+.admin-report__decide {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.admin-court__actions { margin-top: var(--space-3); }
+
+.admin-court__coords {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+
+.admin-court__action-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.admin-court__action-buttons .btn { flex: 1; min-height: 48px; gap: var(--space-2); }
+.admin-court__action-buttons .btn-primary { flex: 2; }
+
+.admin-court__note { margin: 0; font-size: 13px; color: var(--text-secondary); }
+
+.admin-court__history { margin-top: var(--space-3); }
+
+.admin-court__history-toggle { gap: var(--space-2); }
+
+/* History entries */
+
+.admin-history {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: var(--space-2) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-history__item {
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.admin-history__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.admin-history__result { font-weight: 600; }
+.admin-history__result--stale { color: var(--condition-fair); }
+.admin-history__time { flex: none; font-size: 12px; color: var(--text-secondary); }
+
+.admin-history__reason { margin: var(--space-2) 0 0; font-size: 13px; color: var(--text-secondary); }
+
+.admin-history__reason--warning { color: var(--condition-fair); }
+
+.admin-history__details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin: var(--space-2) 0 0;
+  font-size: 13px;
+}
+
+.admin-history__report { margin-top: var(--space-2); min-height: 32px; padding: 0 var(--space-3); font-size: 13px; }
+
+/* Reports */
+
+.admin-report__head { margin-bottom: var(--space-4); }
+
+.admin-report__title { margin: 0 0 var(--space-2); font-size: 20px; font-weight: 700; }
+
+.admin-report__chips { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+
+.admin-report__facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--space-2);
+  margin: 0 0 var(--space-3);
+}
+
+.admin-report__facts .court-fact {
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.court-fact__value--warning { color: var(--condition-fair); }
+
+.admin-report__reason {
+  margin: 0 0 var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-left: 3px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+
+.admin-report__reason p { margin: 0; }
+
+.admin-report__time { margin: 0 0 var(--space-4); font-size: 13px; color: var(--text-secondary); }
+
+.admin-report__resolved { display: flex; flex-direction: column; gap: var(--space-1); font-size: 14px; color: var(--text-secondary); }
+
+.admin-report__resolved p { margin: 0; }
+
+/* Delivery failures visible to the operator */
+
+.admin-delivery {
+  margin-top: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--feedback-error-bg);
+}
+
+.admin-delivery__title { margin: 0 0 var(--space-2); font-size: 14px; font-weight: 700; }
+
+.admin-delivery ul { margin: 0; padding-left: var(--space-5); font-size: 13px; }
+.admin-delivery__item { margin: var(--space-1) 0; }
+
+@media (max-width: 767px) {
+  .admin { padding: 0 var(--space-3) var(--space-5); }
+  .admin__title { font-size: 16px; }
+  .admin-court__coords { grid-template-columns: 1fr; }
+}

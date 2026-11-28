@@ -12,6 +12,7 @@ import SidePanel from './components/SidePanel'
 import FilterButton from './components/FilterButton'
 import FilterPanel from './components/FilterPanel'
 import Toast from './components/Toast'
+import AdminApp from './components/admin/AdminApp'
 import type { Coordinates } from './components/CourtForm'
 import type { Court } from './services/api'
 import { useMediaQuery } from './hooks/useMediaQuery'
@@ -33,7 +34,19 @@ type Ui =
 
 const BROWSE: Ui = { kind: 'browse' }
 
+/** Закрытая админка живёт на том же SPA: /admin и /admin?court=… */
+function isAdminPath(): boolean {
+  return window.location.pathname === '/admin' || window.location.pathname === '/admin/'
+}
+
 function App() {
+  if (isAdminPath()) {
+    return <AdminApp />
+  }
+  return <MapApp />
+}
+
+function MapApp() {
   const isMobile = useMediaQuery('(max-width: 767px)')
   const { status, courts, retry, add, byId } = useCourts()
   const geo = useGeolocation()

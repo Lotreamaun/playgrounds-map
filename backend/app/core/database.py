@@ -15,6 +15,10 @@ def create_db_and_tables() -> None:
     SQLModel.metadata.create_all(engine)
     _migrate_courts_address()
     _migrate_courts_is_covered()
+    # Добавочная миграция видимости (change add-court-administration):
+    # существующие площадки остаются опубликованными с прежними ID.
+    _migrate_courts_column("is_hidden", "BOOLEAN NOT NULL DEFAULT 0")
+    _migrate_courts_column("is_photo_published", "BOOLEAN NOT NULL DEFAULT 1")
 
 
 def _migrate_courts_address() -> None:
@@ -38,6 +42,18 @@ def _migrate_courts_is_covered() -> None:
         return
     with engine.connect() as connection:
         connection.execute(text("ALTER TABLE courts ADD COLUMN is_covered BOOLEAN"))
+        connection.commit()
+
+
+def _migrate_courts_column(column: str, definition: str) -> None:
+    inspector = inspect(engine)
+    if "courts" not in inspector.get_table_names():
+        return
+    columns = {col["name"] for col in inspector.get_columns("courts")}
+    if column in columns:
+        return
+    with engine.connect() as connection:
+        connection.execute(text(f"ALTER TABLE courts ADD COLUMN {column} {definition}"))
         connection.commit()
 
 

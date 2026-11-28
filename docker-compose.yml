@@ -12,6 +12,16 @@ services:
     environment:
       ADMIN_TOKEN: ${ADMIN_TOKEN:-change-me}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173,http://localhost}
+      # Админка: пароль и секрет сессий задаются явно, иначе вход закрыт (fail-closed).
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_ALLOW_INSECURE_HTTP: ${ADMIN_ALLOW_INSECURE_HTTP:-false}
+      TRUST_PROXY_HEADERS: "true"
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      SESSION_SECRET: ${SESSION_SECRET:-}
+      # Telegram-уведомления администратору о новых площадках и обращениях.
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      TELEGRAM_ADMIN_CHAT_ID: ${TELEGRAM_ADMIN_CHAT_ID:-}
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-}
     volumes:
       - courtmap-data:/app/data
 

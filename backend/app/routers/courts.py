@@ -6,20 +6,31 @@ from sqlmodel import Session, select
 
 from app.core.config import get_settings
 from app.core.database import get_session
-from app.models.court import Court
+from app.models.admin import DeliveryJob
+from app.models.court import Court, CourtPublic, court_to_public
+from app.services.admin_service import AdminService
 from app.services.court_service import CourtService
 
 router = APIRouter(prefix="/courts", tags=["courts"])
 
 settings = get_settings()
 
+# Стандартные значения токена, при которых старый DELETE отключён (design.md, решение 2).
+STANDARD_ADMIN_TOKENS = {"", "change-me"}
+
 
 def get_court_service(session: Session = Depends(get_session)) -> CourtService:
     return CourtService(session)
 
 
+def _legacy_delete_enabled() -> bool:
+    return settings.ADMIN_TOKEN not in STANDARD_ADMIN_TOKENS
+
+
 def _admin_token_authorized(admin_token: Optional[str] = Header(default=None)) -> None:
-    if not admin_token or not secrets.compare_digest(admin_token, settings.ADMIN_TOKEN):
+    if not _legacy_delete_enabled():
+        raise HTTPException(status_code=503, detail="legacy DELETE is disabled: configure a custom ADMIN_TOKEN")
+    if not admin_token or not secrets.compare_digest(admin_token.encode(), settings.ADMIN_TOKEN.encode()):
         raise HTTPException(status_code=403, detail="invalid or missing ADMIN_TOKEN")
 
 
@@ -30,8 +41,8 @@ def list_courts(
     max_lat: Optional[float] = None,
     max_lon: Optional[float] = None,
     session: Session = Depends(get_session),
-) -> list[Court]:
-    statement = select(Court)
+) -> list[CourtPublic]:
+    statement = select(Court).where(Court.is_hidden == False)  # noqa: E712 — SQL-выражение
     if min_lat is not None:
         statement = statement.where(Court.latitude >= min_lat)
     if max_lat is not None:
@@ -40,7 +51,7 @@ def list_courts(
         statement = statement.where(Court.longitude >= min_lon)
     if max_lon is not None:
         statement = statement.where(Court.longitude <= max_lon)
-    return session.exec(statement).all()
+    return [court_to_public(court) for court in session.exec(statement).all()]
 
 
 @router.post("", status_code=201)
@@ -57,7 +68,7 @@ def create_court(
     address: Optional[str] = Form(default=None),
     photo: Optional[UploadFile] = None,
     session: Session = Depends(get_session),
-) -> Court:
+) -> CourtPublic:
     service = get_court_service(session)
     service.validate_coordinates(latitude, longitude)
     service.validate_required_fields(
@@ -85,20 +96,24 @@ def create_court(
         photo_url=photo_url,
     )
     session.add(court)
+    session.flush()
+    # Задание доставки — в одной транзакции с площадкой: сбой Telegram не мешает публикации.
+    session.add(DeliveryJob(kind="court_created", court_id=court.id))
     session.commit()
     session.refresh(court)
-    return court
+    return court_to_public(court)
 
 
 @router.get("/{court_id}")
 def get_court(
     court_id: int,
     session: Session = Depends(get_session),
-) -> Court:
+) -> CourtPublic:
     court = session.get(Court, court_id)
-    if court is None:
+    # Скрытая площадка для публичного API не существует.
+    if court is None or court.is_hidden:
         raise HTTPException(status_code=404, detail="court not found")
-    return court
+    return court_to_public(court)
 
 
 @router.delete("/{court_id}", status_code=204)
@@ -109,8 +124,7 @@ def delete_court(
 ) -> None:
     _admin_token_authorized(admin_token)
     court = session.get(Court, court_id)
-    if court is None:
+    if court is None or court.is_hidden:
         raise HTTPException(status_code=404, detail="court not found")
-    session.delete(court)
-    session.commit()
+    AdminService(session).set_hidden(court, hidden=True, admin="legacy-token", reason=None)
     return None
